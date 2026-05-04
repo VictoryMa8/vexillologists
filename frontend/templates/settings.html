@@ -3,36 +3,14 @@
 {% block content %}
 <main class="flex flex-col items-center justify-center p-8 gap-4 w-9/10 md:w-3/4">
     <h1 class="text-3xl font-bold">Settings 🛠️</h1>
-    <form method="post" class="flex flex-col gap-4 bg-base-300 p-4 rounded-lg">
-        {% csrf_token %}
-        {% for field in form %}
-            <label class="form-control w-full">
-                <div class="label">
-                    <span class="label-text font-medium">{{ field.label }}</span>
-                </div>
-                {{ field }}
-                {% if field.help_text %}
-                    <div class="label pb-0 justify-start">
-                        <div class="label-text-alt text-base-content whitespace-normal break-words text-left">{{ field.help_text }}</div>
-                    </div>
-                {% endif %}
-                {% for error in field.errors %}
-                    <div class="label">
-                        <span class="label-text-alt text-error font-medium">{{ error }}</span>
-                    </div>
-                {% endfor %}
-            </label>
-        {% endfor %}
-        <button type="submit" class="btn btn-success mt-4 w-full">Save Changes</button>
-    </form>
-    
-    <div class="mt-4 flex flex-col gap-2 text-xl text-center bg-base-300 p-6 rounded-lg">
-        <h2 class="text-xl font-bold border-b border-base-300">Account Info</h2>
+
+    <div class="w-full flex flex-col gap-2 text-xl text-center bg-base-300 p-6 rounded-lg">
+        <h2 class="text-xl font-bold border-b border-base-content/20 pb-2">Account Info</h2>
         <p>Date Joined: {{ user.date_joined|date:"M d, Y" }}</p>
         <p>Username: {{ user.username }}</p>
         <p class="font-bold">High Score: {{ user.high_score }}</p>
         <p class="font-bold">Games Played: {{ user.games_played }}</p>
-        <!-- If the email is verified, display a green checkmark, otherwise, display a button to resend the confirmation email -->
+        <!-- If the email is verified, display a checkmark, otherwise, display a button to resend the confirmation email -->
         {% if email_verified %}
         <div class="flex items-center justify-center gap-2 font-semibold">
             Email Confirmed
@@ -40,10 +18,96 @@
         {% else %}
         <form method="post" action="{% url 'resend_confirmation' %}">
             {% csrf_token %}
-            <button type="submit" class="btn btn-warning w-full">Resend Confirmation Email</button>
+            <button type="submit" class="btn btn-warning w-full mt-2">Resend Confirmation Email</button>
         </form>
         {% endif %}
         <button class="btn btn-error w-full" onclick="delete_modal.showModal()">Delete Account</button>
+    </div>
+
+    <!-- Username form -->
+    <div class="w-full bg-base-300 p-6 rounded-lg flex flex-col gap-4">
+        <h2 class="text-xl font-bold border-b border-base-content/20 pb-2">Change Username</h2>
+        <form method="post" class="flex flex-col gap-4">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="username">
+            {% for field in username_form %}
+                <label class="form-control w-full">
+                    <div class="label">
+                        <span class="label-text font-medium">{{ field.label }}</span>
+                    </div>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <div class="label pb-0 justify-start">
+                            <div class="label-text-alt text-base-content whitespace-normal break-words text-left">{{ field.help_text }}</div>
+                        </div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <div class="label">
+                            <span class="label-text-alt text-error font-medium">{{ error }}</span>
+                        </div>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            <button type="submit" class="btn btn-success w-full">Save Username</button>
+        </form>
+    </div>
+
+    <!-- Password form -->
+    {% if user.has_usable_password %}
+    <div class="w-full bg-base-300 p-6 rounded-lg flex flex-col gap-4">
+        <h2 class="text-xl font-bold border-b border-base-content/20 pb-2">Change Password</h2>
+        <form method="post" class="flex flex-col gap-4">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="password">
+            {% for field in password_form %}
+                <label class="form-control w-full">
+                    <div class="label">
+                        <span class="label-text font-medium">{{ field.label }}</span>
+                    </div>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <div class="label pb-0 justify-start">
+                            <div class="label-text-alt text-base-content whitespace-normal break-words text-left">{{ field.help_text }}</div>
+                        </div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <div class="label">
+                            <span class="label-text-alt text-error font-medium">{{ error }}</span>
+                        </div>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            <button type="submit" class="btn btn-success w-full">Save Password</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Profile form -->
+    <div class="w-full bg-base-300 p-6 rounded-lg flex flex-col gap-4">
+        <h2 class="text-xl font-bold border-b border-base-content/20 pb-2">Profile</h2>
+        <form method="post" class="flex flex-col gap-4">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="profile">
+            {% for field in form %}
+                <label class="form-control w-full">
+                    <div class="label">
+                        <span class="label-text font-medium">{{ field.label }}</span>
+                    </div>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <div class="label pb-0 justify-start">
+                            <div class="label-text-alt text-base-content whitespace-normal break-words text-left">{{ field.help_text }}</div>
+                        </div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <div class="label">
+                            <span class="label-text-alt text-error font-medium">{{ error }}</span>
+                        </div>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            <button type="submit" class="btn btn-success w-full">Save Profile</button>
+        </form>
     </div>
 </main>
 

@@ -22,15 +22,91 @@
             {% csrf_token %}
             <input type="hidden" name="gamemode" value="world_tour">
             <button type="submit"
-                class="card bg-base-200 border-2 border-success hover:shadow-lg hover:shadow-success/25 hover:bg-success/40 hover:text-success-content hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
+                class="card bg-base-200 border-2 border-success hover:shadow-lg hover:shadow-success/25 hover:bg-success/40 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
                 <div class="card-body gap-3">
                     <div class="flex items-center justify-between">
                         <span class="text-4xl">🌍</span>
-                        <span class="badge badge-success badge-sm font-semibold">Playable</span>
+                        <span class="badge badge-primary badge-sm font-semibold">Super Hard</span>
                     </div>
                     <h2 class="card-title text-xl">World Tour</h2>
                     <p class="text-sm text-base-content/60 leading-relaxed">
                         Guess flags from countries and territories all over the world. Keep your streak alive and try to get on the leaderboard!
+                    </p>
+                </div>
+            </button>
+        </form>
+
+        <!-- Africa Challenge (playable) -->
+        <form method="post" action="{% url 'quiz' %}" class="contents">
+            {% csrf_token %}
+            <input type="hidden" name="gamemode" value="africa">
+            <button type="submit"
+                class="card bg-base-200 border-2 border-warning hover:shadow-lg hover:shadow-warning/25 hover:bg-warning/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
+                <div class="card-body gap-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-4xl">🦒</span>
+                        <span class="badge badge-error badge-sm font-semibold">Hard</span>
+                    </div>
+                    <h2 class="card-title text-xl">Africa Challenge</h2>
+                    <p class="text-sm text-base-content/60 leading-relaxed">
+                        Guess all 58 flags from Africa without a single mistake.
+                    </p>
+                </div>
+            </button>
+        </form>
+
+        <!-- Asia Challenge (playable) -->
+        <form method="post" action="{% url 'quiz' %}" class="contents">
+            {% csrf_token %}
+            <input type="hidden" name="gamemode" value="asia">
+            <button type="submit"
+                class="card bg-base-200 border-2 border-error hover:shadow-lg hover:shadow-error/25 hover:bg-error/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
+                <div class="card-body gap-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-4xl">🏯</span>
+                        <span class="badge badge-error badge-sm font-semibold">Hard</span>
+                    </div>
+                    <h2 class="card-title text-xl">Asia Challenge</h2>
+                    <p class="text-sm text-base-content/60 leading-relaxed">
+                        Guess all 52 flags from Asia without a single mistake.
+                    </p>
+                </div>
+            </button>
+        </form>
+
+        <!-- Europe Challenge (playable) -->
+        <form method="post" action="{% url 'quiz' %}" class="contents">
+            {% csrf_token %}
+            <input type="hidden" name="gamemode" value="europe">
+            <button type="submit"
+                class="card bg-base-200 border-2 border-primary hover:shadow-lg hover:shadow-primary/25 hover:bg-primary/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
+                <div class="card-body gap-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-4xl">🇪🇺</span>
+                        <span class="badge badge-warning badge-sm font-semibold">Medium</span>
+                    </div>
+                    <h2 class="card-title text-xl">Europe Challenge</h2>
+                    <p class="text-sm text-base-content/60 leading-relaxed">
+                        Guess all 53 flags from Europe without a single mistake.
+                    </p>
+                </div>
+            </button>
+        </form>
+
+        <!-- Oceania Challenge (playable) -->
+        <form method="post" action="{% url 'quiz' %}" class="contents">
+            {% csrf_token %}
+            <input type="hidden" name="gamemode" value="oceania">
+            <button type="submit"
+                class="card bg-base-200 border-2 border-accent hover:shadow-lg hover:shadow-accent/25 hover:bg-accent/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
+                <div class="card-body gap-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-4xl">🌴</span>
+                        <span class="badge badge-warning badge-sm font-semibold">Medium</span>
+                    </div>
+                    <h2 class="card-title text-xl">Oceania Challenge</h2>
+                    <p class="text-sm text-base-content/60 leading-relaxed">
+                        Guess all 16 flags from Oceania without a single mistake.
                     </p>
                 </div>
             </button>
@@ -45,7 +121,7 @@
                 <div class="card-body gap-3">
                     <div class="flex items-center justify-between">
                         <span class="text-4xl">🏔️</span>
-                        <span class="badge badge-info badge-sm font-semibold">Playable</span>
+                        <span class="badge badge-success badge-sm font-semibold">Easy</span>
                     </div>
                     <h2 class="card-title text-xl">North America Challenge</h2>
                     <p class="text-sm text-base-content/60 leading-relaxed">
@@ -55,75 +131,24 @@
             </button>
         </form>
 
-        <!-- Africa Challenge (locked) -->
-        <div class="card bg-base-200 border-2 border-base-300 opacity-45 cursor-not-allowed text-left">
-            <div class="card-body gap-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-4xl">🦒</span>
-                    <span class="badge badge-ghost badge-sm">Coming Soon</span>
+        <!-- South America Challenge (playable) -->
+        <form method="post" action="{% url 'quiz' %}" class="contents">
+            {% csrf_token %}
+            <input type="hidden" name="gamemode" value="south_america">
+            <button type="submit"
+                class="card bg-base-200 border-2 border-secondary hover:shadow-lg hover:shadow-secondary/25 hover:bg-secondary/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
+                <div class="card-body gap-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-4xl">🦎</span>
+                        <span class="badge badge-success badge-sm font-semibold">Easy</span>
+                    </div>
+                    <h2 class="card-title text-xl">South America Challenge</h2>
+                    <p class="text-sm text-base-content/60 leading-relaxed">
+                        Guess all 12 flags from South America without a single mistake.
+                    </p>
                 </div>
-                <h2 class="card-title text-xl">Africa Challenge</h2>
-                <p class="text-sm text-base-content/60 leading-relaxed">
-                    Guess all flags from Africa. Part of the continent challenge series.
-                </p>
-            </div>
-        </div>
-
-        <!-- Asia Challenge (locked) -->
-        <div class="card bg-base-200 border-2 border-base-300 opacity-45 cursor-not-allowed text-left">
-            <div class="card-body gap-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-4xl">🏯</span>
-                    <span class="badge badge-ghost badge-sm">Coming Soon</span>
-                </div>
-                <h2 class="card-title text-xl">Asia Challenge</h2>
-                <p class="text-sm text-base-content/60 leading-relaxed">
-                    Guess all flags from Asia. Part of the continent challenge series.
-                </p>
-            </div>
-        </div>
-
-        <!-- Europe Challenge (locked) -->
-        <div class="card bg-base-200 border-2 border-base-300 opacity-45 cursor-not-allowed text-left">
-            <div class="card-body gap-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-4xl">🇪🇺</span>
-                    <span class="badge badge-ghost badge-sm">Coming Soon</span>
-                </div>
-                <h2 class="card-title text-xl">Europe Challenge</h2>
-                <p class="text-sm text-base-content/60 leading-relaxed">
-                    Guess all flags from Europe. Part of the continent challenge series.
-                </p>
-            </div>
-        </div>
-
-        <!-- Oceania Challenge (locked) -->
-        <div class="card bg-base-200 border-2 border-base-300 opacity-45 cursor-not-allowed text-left">
-            <div class="card-body gap-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-4xl">🌴</span>
-                    <span class="badge badge-ghost badge-sm">Coming Soon</span>
-                </div>
-                <h2 class="card-title text-xl">Oceania Challenge</h2>
-                <p class="text-sm text-base-content/60 leading-relaxed">
-                    Guess all flags from Oceania. Part of the continent challenge series.
-                </p>
-            </div>
-        </div>
-
-        <!-- South America Challenge (locked) -->
-        <div class="card bg-base-200 border-2 border-base-300 opacity-45 cursor-not-allowed text-left">
-            <div class="card-body gap-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-4xl">🦎</span>
-                    <span class="badge badge-ghost badge-sm">Coming Soon</span>
-                </div>
-                <h2 class="card-title text-xl">South America Challenge</h2>
-                <p class="text-sm text-base-content/60 leading-relaxed">
-                    Guess all flags from South America. Part of the continent challenge series.
-                </p>
-            </div>
-        </div>
+            </button>
+        </form>
 
         <!-- Speed Round (locked) -->
         <div class="card bg-base-200 border-2 border-base-300 opacity-45 cursor-not-allowed text-left">

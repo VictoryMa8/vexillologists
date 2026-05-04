@@ -1,5 +1,6 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+# Using Django's built-in UserCreationForm and PasswordChangeForm to inherit from
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm as DjangoPasswordChangeForm
 from .models import Vexillologist
 
 # Form for creating a new user (Vexillologist) using UserCreationForm
@@ -42,3 +43,19 @@ class VexillologistChangeForm(forms.ModelForm):
     class Meta:
         model = Vexillologist
         fields = ('first_name', 'last_name')
+
+
+class UsernameChangeForm(forms.ModelForm):
+    class Meta:
+        model = Vexillologist
+        fields = ('username',)
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if Vexillologist.objects.exclude(pk=self.instance.pk).filter(username__iexact=username).exists():
+            raise forms.ValidationError("That username is already taken.")
+        return username
+
+
+class PasswordChangeForm(DjangoPasswordChangeForm):
+    pass

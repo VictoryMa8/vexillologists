@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.utils.text import slugify
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login as auth_login
+from django.contrib.auth import login as auth_login, update_session_auth_hash
 from django.db.models import F
 from django.core.cache import cache
 # Named django_settings to avoid conflict with settings.py (my view)
@@ -10,7 +10,7 @@ from django.conf import settings as django_settings
 
 from allauth.account.models import EmailAddress
 
-from .forms import LoginForm, VexillologistCreationForm, VexillologistChangeForm
+from .forms import LoginForm, VexillologistCreationForm, VexillologistChangeForm, UsernameChangeForm, PasswordChangeForm
 from .models import Country, Vexillologist
 import random
 import time
@@ -78,18 +78,6 @@ def get_countries():
     cache.set(COUNTRIES_CACHE_KEY, result, COUNTRIES_CACHE_TTL)
     return result
 
-
-# Countries in the DB use a single 'Americas' region for all of the Western Hemisphere
-# We split it manually so continent-level gamemodes can be more precise
-NORTH_AMERICA_NAMES = {
-    'Antigua and Barbuda', 'Bahamas', 'Barbados', 'Belize', 'Canada',
-    'Costa Rica', 'Cuba', 'Dominica', 'Dominican Republic', 'El Salvador',
-    'Greenland', 'Grenada', 'Guatemala', 'Haiti', 'Honduras', 'Jamaica',
-    'Mexico', 'Nicaragua', 'Nunavut', 'Panama', 'Puerto Rico', 'Quebec',
-    'Saint Kitts and Nevis', 'Saint Lucia', 'Saint Vincent and the Grenadines',
-    'Trinidad and Tobago', 'United States',
-}
-
 GAMEMODES = {
     'world_tour': {
         'name': 'World Tour',
@@ -99,7 +87,27 @@ GAMEMODES = {
     'north_america': {
         'name': 'North America',
         # countries only from North America
-        'filter': lambda countries: [c for c in countries if c['Country'] in NORTH_AMERICA_NAMES],
+        'filter': lambda countries: [c for c in countries if c['Region'] == 'North America'],
+    },
+    'south_america': {
+        'name': 'South America',
+        'filter': lambda countries: [c for c in countries if c['Region'] == 'South America'],
+    },
+    'asia': {
+        'name': 'Asia',
+        'filter': lambda countries: [c for c in countries if c['Region'] == 'Asia'],
+    },
+    'europe': {
+        'name': 'Europe',
+        'filter': lambda countries: [c for c in countries if c['Region'] == 'Europe'],
+    },
+    'oceania': {
+        'name': 'Oceania',
+        'filter': lambda countries: [c for c in countries if c['Region'] == 'Oceania'],
+    },
+    'africa': {
+        'name': 'Africa',
+        'filter': lambda countries: [c for c in countries if c['Region'] == 'Africa'],
     },
 }
 
@@ -242,6 +250,7 @@ def quiz(request):
             random_country = request.session.get('quiz_country')
             streak = request.session.get('quiz_streak', 0)
             collected_flags = request.session.get('quiz_collected_flags', [])
+            
             return render(request, 'quiz.html', context={
                 'random_country': random_country,
                 'streak': streak,
@@ -264,10 +273,12 @@ def quiz(request):
         gm = GAMEMODES.get(gamemode_key, GAMEMODES['world_tour'])
         pool = gm['filter'](get_countries())
         random_country = random.choice(pool) if pool else None
+        
         request.session['quiz_country'] = random_country
         request.session['quiz_streak'] = 0
         request.session['quiz_collected_flags'] = []
         request.session['quiz_collected_names'] = []
+        
         return render(request, 'quiz.html', context={
             'random_country': random_country,
             'streak': 0,
@@ -299,11 +310,13 @@ def quiz(request):
         if not truth:
             return redirect('quiz')
 
+        # Get the guess from the POST data
         guess = request.POST.get('guess', '').strip()
         truth_name = truth['Country']
         truth_flag = truth.get('flag_image_url') or truth['Flag']
-
+    
         user = request.user
+        # Get the gamemode key from the session, default to world_tour if not set
         gamemode_key = request.session.get('quiz_gamemode', 'world_tour')
         pool_size = request.session.get('quiz_pool_size', 0)
 
@@ -343,6 +356,7 @@ def quiz(request):
             game_over = True
             final_streak = streak
             final_collected_flags = collected_flags[:]
+            
             if collected_names:
                 mastered = Country.objects.filter(name__in=collected_names)
                 user.mastered_flags.add(*mastered)
@@ -359,10 +373,13 @@ def quiz(request):
 
         # Pick the next country from the gamemode pool, excluding already-collected ones
         gm = GAMEMODES.get(gamemode_key, GAMEMODES['world_tour'])
+        # Get the countries for the gamemode
         pool = gm['filter'](get_countries())
+        # Get the countries that are not in the collected names
         available = [c for c in pool if c['Country'] not in collected_names]
         if not available:
             available = pool
+            
         random_country = random.choice(available)
         request.session['quiz_country'] = random_country
         request.session['quiz_streak'] = streak
@@ -383,7 +400,6 @@ def quiz(request):
     else:
         return redirect('quiz')
 
-
 @login_required
 def change_gamemode(request):
     """Clear all quiz session state so the player is returned to the gamemode selection screen."""
@@ -391,7 +407,6 @@ def change_gamemode(request):
                 'quiz_collected_flags', 'quiz_collected_names', 'quiz_result']:
         request.session.pop(key, None)
     return redirect('quiz')
-
     
 def leaderboard(request):
     top_players = Vexillologist.objects.order_by('-high_score')[:10]
@@ -428,22 +443,45 @@ def release_notes(request):
 
 @login_required
 def settings(request):
+    profile_form = VexillologistChangeForm(instance=request.user)
+    username_form = UsernameChangeForm(instance=request.user)
+    password_form = PasswordChangeForm(user=request.user)
+
     if request.method == 'POST':
-        # 'instance' parameter tells the Django form which record to update
-        # Necessary since we are updating (current logged-in user) rather than creating
-        form = VexillologistChangeForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            # Using Django messages for success message
-            messages.success(request, 'Your settings have been saved!')
-            return redirect('settings')
-    else:
-        form = VexillologistChangeForm(instance=request.user)
+        form_type = request.POST.get('form_type')
+
+        if form_type == 'profile':
+            # 'instance' parameter tells the Django form which record to update
+            # Necessary since we are updating (current logged-in user) rather than creating
+            profile_form = VexillologistChangeForm(request.POST, instance=request.user)
+            if profile_form.is_valid():
+                profile_form.save()
+                messages.success(request, 'Profile updated!')
+                return redirect('settings')
+
+        elif form_type == 'username':
+            username_form = UsernameChangeForm(request.POST, instance=request.user)
+            if username_form.is_valid():
+                username_form.save()
+                messages.success(request, 'Username updated!')
+                return redirect('settings')
+
+        elif form_type == 'password':
+            password_form = PasswordChangeForm(user=request.user, data=request.POST)
+            if password_form.is_valid():
+                password_form.save()
+                update_session_auth_hash(request, password_form.user)
+                messages.success(request, 'Password updated!')
+                return redirect('settings')
 
     email_record = EmailAddress.objects.filter(user=request.user, primary=True).first()
     email_verified = email_record.verified if email_record else False
-    return render(request, 'settings.html', {'form': form, 'email_verified': email_verified})
-
+    return render(request, 'settings.html', {
+        'form': profile_form,
+        'username_form': username_form,
+        'password_form': password_form,
+        'email_verified': email_verified,
+    })
 
 @login_required
 def resend_confirmation(request):
