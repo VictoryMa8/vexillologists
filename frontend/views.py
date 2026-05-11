@@ -7,13 +7,11 @@ from django.db.models import F
 from django.core.cache import cache
 # Named django_settings to avoid conflict with settings.py (my view)
 from django.conf import settings as django_settings
-
 from allauth.account.models import EmailAddress
 
 from .forms import LoginForm, VexillologistCreationForm, VexillologistChangeForm, UsernameChangeForm, PasswordChangeForm
 from .models import Country, Vexillologist
 import random
-import time
 import requests
 
 # Create your views here.
@@ -36,6 +34,27 @@ The post_save/post_delete signals in models.py will also clear the cache immedia
 whenever an admin edits a Country record
 """
 COUNTRIES_CACHE_TTL = 60 * 60  # 1 hour
+
+def filter_countries(countries, query="", continent="", min_area=None, min_population=None, entry_type="", common_entry_types=None):
+    query = (query or "").strip().lower()
+    continent = (continent or "").strip()
+    entry_type = (entry_type or "").strip()
+
+    result = countries
+
+    # Filter the countries based on the query, continent, entry type, min area, and min population
+    if query:
+        result = [c for c in result if c['Country'].lower().startswith(query)]
+    if continent:
+        result = [c for c in result if (c.get('Region') or "") == continent]
+    if entry_type:
+        result = [c for c in result if (c.get('Type') or "") == entry_type]
+    if min_area is not None:
+        result = [c for c in result if (c.get('Area_km2') or 0) >= min_area]
+    if min_population is not None:
+        result = [c for c in result if (c.get('Population_2024') or 0) >= min_population]
+
+    return result
 
 def get_countries():
     """
@@ -113,7 +132,56 @@ GAMEMODES = {
 
 def index(request):
     countries = get_countries()
-    return render(request, 'index.html', context={'countries': countries })
+
+    # Get the filter values from the HTMX GET request
+    selected_query = request.GET.get("search_countries", "")
+    selected_continent = request.GET.get("continent", "")
+    selected_type = request.GET.get("entry_type", "")
+    selected_min_area = request.GET.get("min_area", "")
+    selected_min_population = request.GET.get("min_population", "")
+
+    # Convert the min_area and min_population values to integers
+    try:
+        min_area = int(selected_min_area.strip()) if selected_min_area.strip() else None
+    except ValueError:
+        min_area = None
+    try:
+        min_population = int(selected_min_population.strip()) if selected_min_population.strip() else None
+    except ValueError:
+        min_population = None
+
+    # Filter the countries based on the filter values
+    filtered_countries = filter_countries(
+        countries,
+        query=selected_query,
+        continent=selected_continent,
+        min_area=min_area,
+        min_population=min_population,
+        entry_type=selected_type,
+    )
+
+    # Get the continents and entry types from the countries
+    continents = sorted({
+        (c.get('Region') or "").strip()
+        for c in countries
+        if (c.get('Region') or "").strip()
+    })
+    entry_types = sorted({
+        (c.get('Type') or "").strip()
+        for c in countries
+        if (c.get('Type') or "").strip()
+    })
+
+    return render(request, 'index.html', context={
+        'countries': filtered_countries,
+        'continents': continents,
+        'entry_types': entry_types,
+        'selected_query': selected_query,
+        'selected_continent': selected_continent,
+        'selected_type': selected_type,
+        'selected_min_area': selected_min_area,
+        'selected_min_population': selected_min_population,
+    })
 
 def signup(request):
     # On the sign up page, get the form with post
@@ -185,14 +253,34 @@ def login_view(request):
 
 def search_countries(request):
     countries = get_countries()
+    
+    # Get the filter values from the HTMX GET request
     query = request.GET.get("search_countries", "")
-    print(query)
-    if query:
-        # List of countries where the country name starts with the stripped and lowercased query
-        filtered_countries = [country for country in countries if country['Country'].lower().startswith(query.strip().lower())]
-    else:
-        filtered_countries = countries
-    time.sleep(0.075)
+    continent = request.GET.get("continent", "")
+    entry_type = request.GET.get("entry_type", "")
+    min_area_raw = request.GET.get("min_area", "")
+    min_population_raw = request.GET.get("min_population", "")
+
+    # Convert the min_area and min_population values to integers
+    try:
+        min_area = int(min_area_raw.strip()) if min_area_raw.strip() else None
+    except ValueError:
+        min_area = None
+    try:
+        min_population = int(min_population_raw.strip()) if min_population_raw.strip() else None
+    except ValueError:
+        min_population = None
+
+    # Filter the countries based on the filter values
+    filtered_countries = filter_countries(
+        countries,
+        query=query,
+        continent=continent,
+        min_area=min_area,
+        min_population=min_population,
+        entry_type=entry_type,
+    )
+
     return render(request, "list.html", context={'countries': filtered_countries })
 
 @login_required

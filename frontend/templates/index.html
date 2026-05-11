@@ -29,35 +29,106 @@
   </div>
 </div>
 
-<span id="spinner" class="htmx-indicator loading loading-dots loading-xl mt-0 mb-2"></span>
+<span id="spinner" class="htmx-indicator loading loading-dots loading-xl my-2"></span>
 
-<label class="input input-xl">
-  <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-    <g
-      stroke-linejoin="round"
-      stroke-linecap="round"
-      stroke-width="2.5"
-      fill="none"
-      stroke="currentColor"
-    >
-      <circle cx="11" cy="11" r="8"></circle>
-      <path d="m21 21-4.3-4.3"></path>
-    </g>
-  </svg>
-  <input
-    type="text"
-    placeholder="Search for a country..."
-    name="search_countries"
-    hx-get="{% url 'search_countries' %}"
-    hx-trigger="keyup changed"
-    hx-target="#list"
-    hx-on::before-request="document.getElementById('list').style.opacity = 0.3;"
-    hx-on::after-request="document.getElementById('list').style.opacity = 1;"
-    hx-indicator="#spinner"
-  />
-</label>
+<form id="filters" class="my-4 mx-auto w-3/4">
+  <div class="flex flex-wrap items-end gap-2">
+    <label class="input input-bordered w-full text-xl">
+      <input
+        type="text"
+        placeholder="Search for a country or territory..."
+        name="search_countries"
+        class="w-full"
+        value="{{ selected_query }}"
+        hx-get="{% url 'search_countries' %}"
+        hx-trigger="keyup changed"
+        hx-target="#list"
+        hx-include="#filters"
+        hx-on::before-request="document.getElementById('list').style.opacity = 0.3;"
+        hx-on::after-request="document.getElementById('list').style.opacity = 1;"
+        hx-indicator="#spinner"
+      />
+    </label>
 
-<div id="list" class="flex flex-wrap justify-center self-start mx-8 mt-8 mb-24 gap-2">
+    <label class="form-control w-full sm:w-56">
+      <span class="label-text">Continent</span>
+      <select
+        class="select select-bordered w-full"
+        name="continent"
+        hx-get="{% url 'search_countries' %}"
+        hx-trigger="change"
+        hx-target="#list"
+        hx-include="#filters"
+        hx-indicator="#spinner"
+      >
+        <option value="">All continents</option>
+        {% for continent in continents %}
+          <option value="{{ continent }}" {% if selected_continent == continent %}selected{% endif %}>{{ continent }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label class="form-control w-full sm:w-56">
+      <span class="label-text">Type</span>
+      <select
+        class="select select-bordered w-full"
+        name="entry_type"
+        hx-get="{% url 'search_countries' %}"
+        hx-trigger="change"
+        hx-target="#list"
+        hx-include="#filters"
+        hx-indicator="#spinner"
+      >
+        <option value="">All types</option>
+        {% for entry_type in entry_types %}
+          <option value="{{ entry_type }}" {% if selected_type == entry_type %}selected{% endif %}>{{ entry_type }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label class="form-control w-full sm:w-48">
+      <span class="label-text">Min area (km²)</span>
+      <input
+        type="number"
+        class="input input-bordered w-full"
+        name="min_area"
+        min="0"
+        step="1"
+        value="{{ selected_min_area }}"
+        placeholder="e.g. 100000"
+        hx-get="{% url 'search_countries' %}"
+        hx-trigger="keyup changed delay:300ms"
+        hx-target="#list"
+        hx-include="#filters"
+        hx-indicator="#spinner"
+      />
+    </label>
+
+    <label class="form-control w-full sm:w-48">
+      <span class="label-text">Min population</span>
+      <input
+        type="number"
+        class="input input-bordered w-full"
+        name="min_population"
+        min="0"
+        step="1"
+        value="{{ selected_min_population }}"
+        placeholder="e.g. 1000000"
+        hx-get="{% url 'search_countries' %}"
+        hx-trigger="keyup changed delay:300ms"
+        hx-target="#list"
+        hx-include="#filters"
+        hx-indicator="#spinner"
+      />
+    </label>
+
+    <div class="w-full sm:w-auto">
+      <a href="{% url 'index' %}" class="btn btn-outline w-full sm:w-auto">Reset</a>
+    </div>
+  </div>
+</form>
+
+<div id="list" class="flex flex-wrap self-start mx-8 mt-8 mb-24 gap-2">
 {% include 'list.html' %}
 </div>
 
