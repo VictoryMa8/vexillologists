@@ -287,7 +287,6 @@ def search_countries(request):
 def search_guesses(request):
     countries = get_countries()
     query = request.GET.get("guess", "")
-    print(query)
     if query:
         # List of countries where the country name starts with the stripped and lowercased query
         filtered_countries = [country for country in countries if country['Country'].lower().startswith(query.strip().lower())]
@@ -301,7 +300,6 @@ def country(request, country_name):
     # Slugify makes it a cleaner string
     chosen_country = [country for country in countries if slugify(country['Country']) == country_name]
     if chosen_country:
-        print(chosen_country[0])
         return render(request, 'country.html', context={'chosen_country': chosen_country[0]})
     else:
         return redirect("/")
