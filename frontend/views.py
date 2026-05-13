@@ -44,15 +44,15 @@ def filter_countries(countries, query="", continent="", min_area=None, min_popul
 
     # Filter the countries based on the query, continent, entry type, min area, and min population
     if query:
-        result = [c for c in result if c['Country'].lower().startswith(query)]
+        result = [c for c in result if c['name'].lower().startswith(query)]
     if continent:
-        result = [c for c in result if (c.get('Region') or "") == continent]
+        result = [c for c in result if (c.get('region') or "") == continent]
     if entry_type:
-        result = [c for c in result if (c.get('Type') or "") == entry_type]
+        result = [c for c in result if (c.get('entry_type') or "") == entry_type]
     if min_area is not None:
-        result = [c for c in result if (c.get('Area_km2') or 0) >= min_area]
+        result = [c for c in result if (c.get('area_km2') or 0) >= min_area]
     if min_population is not None:
-        result = [c for c in result if (c.get('Population_2024') or 0) >= min_population]
+        result = [c for c in result if (c.get('population_2024') or 0) >= min_population]
 
     return result
 
@@ -76,16 +76,16 @@ def get_countries():
     """
     result = [
         {
-            'Country': c.name,
-            'Flag': c.flag_emoji,
+            'name': c.name,
+            'flag_emoji': c.flag_emoji,
             'flag_image_url': c.flag_image_url,
-            'Capital': c.capital,
-            'Population_2024': c.population,
-            'Area_km2': c.area_km2,
-            'Official_Language': c.official_language,
-            'Region': c.region,
-            'Type': c.entry_type,
-            'Fact': c.fact,
+            'capital': c.capital,
+            'population_2024': c.population,
+            'area_km2': c.area_km2,
+            'official_language': c.official_language,
+            'region': c.region,
+            'entry_type': c.entry_type,
+            'fact': c.fact,
         }
         for c in Country.objects.all().order_by('name')
     ]
@@ -106,27 +106,39 @@ GAMEMODES = {
     'north_america': {
         'name': 'North America',
         # countries only from North America
-        'filter': lambda countries: [c for c in countries if c['Region'] == 'North America'],
+        'filter': lambda countries: [c for c in countries if c['region'] == 'North America'],
     },
     'south_america': {
         'name': 'South America',
-        'filter': lambda countries: [c for c in countries if c['Region'] == 'South America'],
+        'filter': lambda countries: [c for c in countries if c['region'] == 'South America'],
     },
     'asia': {
         'name': 'Asia',
-        'filter': lambda countries: [c for c in countries if c['Region'] == 'Asia'],
+        'filter': lambda countries: [c for c in countries if c['region'] == 'Asia'],
     },
     'europe': {
         'name': 'Europe',
-        'filter': lambda countries: [c for c in countries if c['Region'] == 'Europe'],
+        'filter': lambda countries: [c for c in countries if c['region'] == 'Europe'],
     },
     'oceania': {
         'name': 'Oceania',
-        'filter': lambda countries: [c for c in countries if c['Region'] == 'Oceania'],
+        'filter': lambda countries: [c for c in countries if c['region'] == 'Oceania'],
     },
     'africa': {
         'name': 'Africa',
-        'filter': lambda countries: [c for c in countries if c['Region'] == 'Africa'],
+        'filter': lambda countries: [c for c in countries if c['region'] == 'Africa'],
+    },
+    'autonomous_regions': {
+        'name': 'Autonomous Regions',
+        'filter': lambda countries: [c for c in countries if c['entry_type'] == 'Autonomous Region'],
+    },
+    'occupied_or_disputed_countries': {
+        'name': 'Occupied or Disputed Countries',
+        'filter': lambda countries: [c for c in countries if c['entry_type'] == 'Occupied or Disputed Country'],
+    },
+    'subnational_entities': {
+        'name': 'Subnational Entities',
+        'filter': lambda countries: [c for c in countries if c['entry_type'] == 'Subnational Entity'],
     },
 }
 
@@ -162,14 +174,14 @@ def index(request):
 
     # Get the continents and entry types from the countries
     continents = sorted({
-        (c.get('Region') or "").strip()
+        (c.get('region') or "").strip()
         for c in countries
-        if (c.get('Region') or "").strip()
+        if (c.get('region') or "").strip()
     })
     entry_types = sorted({
-        (c.get('Type') or "").strip()
+        (c.get('entry_type') or "").strip()
         for c in countries
-        if (c.get('Type') or "").strip()
+        if (c.get('entry_type') or "").strip()
     })
 
     return render(request, 'index.html', context={
@@ -289,7 +301,7 @@ def search_guesses(request):
     query = request.GET.get("guess", "")
     if query:
         # List of countries where the country name starts with the stripped and lowercased query
-        filtered_countries = [country for country in countries if country['Country'].lower().startswith(query.strip().lower())]
+        filtered_countries = [country for country in countries if country['name'].lower().startswith(query.strip().lower())]
     else:
         filtered_countries = countries
     return render(request, "guesses.html", context={'countries': filtered_countries })
@@ -298,7 +310,7 @@ def search_guesses(request):
 def country(request, country_name):
     countries = get_countries()
     # Slugify makes it a cleaner string
-    chosen_country = [country for country in countries if slugify(country['Country']) == country_name]
+    chosen_country = [country for country in countries if slugify(country['name']) == country_name]
     if chosen_country:
         return render(request, 'country.html', context={'chosen_country': chosen_country[0]})
     else:
@@ -353,7 +365,19 @@ def quiz(request):
 
         # No gamemode selected yet - show the gamemode selection screen
         if 'quiz_gamemode' not in request.session:
-            return render(request, 'quiz.html', context={'show_gamemode_select': True})
+            countries = get_countries()
+            mastered_names = set(request.user.mastered_flags.values_list('name', flat=True))
+            gamemode_progress = {
+                key: {
+                    'mastered': len({c['name'] for c in gm['filter'](countries)} & mastered_names),
+                    'total': len(gm['filter'](countries)),
+                }
+                for key, gm in GAMEMODES.items()
+            }
+            return render(request, 'quiz.html', context={
+                'show_gamemode_select': True,
+                'gamemode_progress': gamemode_progress,
+            })
 
         # Fresh page load with a gamemode set - reset all game state
         gm = GAMEMODES.get(gamemode_key, GAMEMODES['world_tour'])
@@ -398,8 +422,8 @@ def quiz(request):
 
         # Get the guess from the POST data
         guess = request.POST.get('guess', '').strip()
-        truth_name = truth['Country']
-        truth_flag = truth.get('flag_image_url') or truth['Flag']
+        truth_name = truth['name']
+        truth_flag = truth.get('flag_image_url') or truth['flag_image_url']
     
         user = request.user
         # Get the gamemode key from the session, default to world_tour if not set
@@ -462,7 +486,7 @@ def quiz(request):
         # Get the countries for the gamemode
         pool = gm['filter'](get_countries())
         # Get the countries that are not in the collected names
-        available = [c for c in pool if c['Country'] not in collected_names]
+        available = [c for c in pool if c['name'] not in collected_names]
         if not available:
             available = pool
             
@@ -506,7 +530,7 @@ def mastery(request):
     mastered_names = set(request.user.mastered_flags.values_list('name', flat=True))
     entries = [
         # **c is a dictionary unpacking operation, it unpacks the dictionary c into the dictionary entries
-        {**c, 'mastered': c['Country'] in mastered_names}
+        {**c, 'mastered': c['name'] in mastered_names}
         for c in countries
     ]
     return render(request, 'mastery.html', {

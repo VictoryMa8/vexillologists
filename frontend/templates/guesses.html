@@ -4,9 +4,9 @@
     <!-- last:border-b-0 is a Tailwind pseudo-class that removes the bottom border from the last item in the list -->
         <button
             type="button"
-            onclick="sendText('{{ country.Country }}')"
+            onclick="sendText('{{ country.name }}')"
             class="w-full text-left px-4 py-2 text-base bg-base-200 hover:bg-success hover:text-success-content transition duration-150 ease-in-out border-b border-success/20 last:border-b-0 cursor-pointer">
-            {{ country.Country }}
+            {{ country.name }}
         </button>
     {% endfor %}
 </div>

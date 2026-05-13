@@ -28,7 +28,7 @@
             <div class="relative w-full rounded-sm overflow-hidden">
                 <img
                     src="{{ entry.flag_image_url }}"
-                    alt="{{ entry.Country }}"
+                    alt="{{ entry.name }}"
                     class="w-full aspect-[3/2] object-contain drop-shadow-sm transition-opacity duration-200
                         {% if entry.mastered %}opacity-100{% else %}opacity-40{% endif %}"
                 />
@@ -44,7 +44,7 @@
             <span class="text-xs text-center leading-tight
                 {% if entry.mastered %}text-base-content{% else %}text-base-content/30{% endif %}"
                 style="max-width: 4.5rem; overflow-wrap: break-word;">
-                {{ entry.Country }}
+                {{ entry.name }}
             </span>
         </div>
         {% endfor %}

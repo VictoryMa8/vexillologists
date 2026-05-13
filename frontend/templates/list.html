@@ -1,12 +1,12 @@
 {% if countries %}
     {% for country in countries %}
     <!-- Slugify filter returns a text into one long word containing nothing but lower case ASCII characters and hyphens -->
-        <a href="{% url 'country' country_name=country.Country|slugify %}" class="text-4xl md:text-4xl bg-success-content hover:bg-success hover:text-success-content transition duration-300 ease-in-out text-white p-4 rounded-2xl flex items-center justify-between">
-            <span>{{ country.Country }} 
+        <a href="{% url 'country' country_name=country.name|slugify %}" class="text-4xl md:text-4xl bg-success-content hover:bg-success hover:text-success-content transition duration-300 ease-in-out text-white p-4 rounded-2xl flex items-center justify-between">
+            <span>{{ country.name }} 
             {% if country.flag_image_url %}
                 <img src="{{ country.flag_image_url }}" class="h-[1em] inline-block shadow-sm ml-1 rounded-sm" alt="Flag">
             {% else %}
-                {{ country.Flag }}
+                {{ country.flag_image_url }}
             {% endif %}
             </span>
         </a>

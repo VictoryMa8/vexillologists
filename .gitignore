@@ -8,8 +8,10 @@ commands
 change.md
 .cursor
 test_jwt.py
-notes_0.md
-notes_1.md
+0_*
+1_*
+2_*
+pytest.ini
 notes_2.md
 staticfiles/
 CLAUDE.md
