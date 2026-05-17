@@ -299,11 +299,7 @@ def search_countries(request):
 def search_guesses(request):
     countries = get_countries()
     query = request.GET.get("guess", "")
-    if query:
-        # List of countries where the country name starts with the stripped and lowercased query
-        filtered_countries = [country for country in countries if country['name'].lower().startswith(query.strip().lower())]
-    else:
-        filtered_countries = countries
+    filtered_countries = filter_countries(countries, query=query)
     return render(request, "guesses.html", context={'countries': filtered_countries })
 
 @login_required
@@ -363,7 +359,7 @@ def quiz(request):
                 'pool_size': request.session.get('quiz_pool_size', 0),
             })
 
-        # No gamemode selected yet - show the gamemode selection screen
+        # No gamemode selected yet: show the gamemode selection screen
         if 'quiz_gamemode' not in request.session:
             countries = get_countries()
             mastered_names = set(request.user.mastered_flags.values_list('name', flat=True))
@@ -423,7 +419,7 @@ def quiz(request):
         # Get the guess from the POST data
         guess = request.POST.get('guess', '').strip()
         truth_name = truth['name']
-        truth_flag = truth.get('flag_image_url') or truth['flag_image_url']
+        truth_flag = truth['flag_image_url']
     
         user = request.user
         # Get the gamemode key from the session, default to world_tour if not set
@@ -514,7 +510,7 @@ def quiz(request):
 def change_gamemode(request):
     """Clear all quiz session state so the player is returned to the gamemode selection screen."""
     for key in ['quiz_gamemode', 'quiz_country', 'quiz_streak',
-                'quiz_collected_flags', 'quiz_collected_names', 'quiz_result']:
+                'quiz_collected_flags', 'quiz_collected_names', 'quiz_result', 'quiz_pool_size']:
         request.session.pop(key, None)
     return redirect('quiz')
     

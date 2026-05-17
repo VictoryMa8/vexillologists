@@ -8,9 +8,7 @@ commands
 change.md
 .cursor
 test_jwt.py
-0_*
-1_*
-2_*
+markdown
 pytest.ini
 notes_2.md
 staticfiles/

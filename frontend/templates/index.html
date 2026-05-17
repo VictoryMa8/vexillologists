@@ -10,8 +10,8 @@
     <img class="mt-4 h-60 rounded-lg" src="{% static 'assets/images/globe.svg' %}">
     <div>
       {% if user.is_authenticated %}
-      <h1 class="text-4xl md:text-6xl font-bold">Welcome to <i>Vexillologists.com</i> <span class="text-success">{{ user.username }}</span>!</h1>
-      <p class="py-4 text-4xl max-w-200">
+      <h1 class="text-4xl md:text-6xl font-bold">Welcome to <i class="font-['Alegreya']">Vexillologists.com</i> <span class="text-success">{{ user.username }}</span>!</h1>
+      <p class="py-4 text-4xl max-w-200 font-['Alegreya']">
         Start quizzing yourself or review the countries & territories below! 👇🤓 Tap on one to learn more 🌎
       </p>
       {% else %}
@@ -20,7 +20,7 @@
         Please <a href="{% url 'login' %}" class="text-success hover:text-success-content transition duration-300 ease-in-out">login</a> to start quizzing yourself or review the countries below! 👇🤓 Tap on one to learn more 🌎
       </p>
       {% endif %}
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-2 font-['Alegreya']">
         <a href="{% url 'quiz' %}" class="btn btn-success text-4xl rounded-2xl p-6">Quiz Yourself!</a>
         <a href="{% url 'leaderboard' %}" class="btn btn-warning text-4xl rounded-2xl p-6">Leaderboard</a>
         <a href="{% url 'mastery' %}" class="btn btn-primary text-4xl rounded-2xl p-6">Mastery</a>

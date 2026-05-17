@@ -1,7 +1,7 @@
 """
 Predeploy test suite for vexillologists.com.
 
-Run with: python manage.py test frontend
+Run with: python manage.py test frontend --keepdb
 
 These tests are intentionally broad — they cover the most important paths
 that would break the site for all users if deployed broken:
