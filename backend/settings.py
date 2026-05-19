@@ -16,10 +16,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -37,11 +35,11 @@ CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
 '''
 https://docs.djangoproject.com/en/6.0/ref/settings/
 
-"If your Django app is behind a proxy, the proxy may be “swallowing” whether the original request uses HTTPS or not. 
+"If our Django app is behind a proxy, the proxy may be “swallowing” whether the original request uses HTTPS or not. 
 
-If there is a non-HTTPS connection between the proxy and Django then is_secure() would always return False – even for requests that were made via HTTPS by the end user. 
+If there is a non-HTTPS connection between the proxy and Django then is_secure() would always return False, even for requests that were made via HTTPS by the end user. 
 
-In contrast, if there is an HTTPS connection between the proxy and Django then is_secure() would always return True – even for requests that were made originally via HTTP.
+In contrast, if there is an HTTPS connection between the proxy and Django then is_secure() would always return True, even for requests that were made originally via HTTP.
 '''
 
 # Tell Django it's secure when sitting behind a reverse proxy (like Fly.io, what we're using)
@@ -143,7 +141,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
@@ -154,7 +151,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

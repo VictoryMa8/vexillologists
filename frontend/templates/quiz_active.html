@@ -1,0 +1,197 @@
+<!-- Active Game -->
+<h1 class="text-4xl mt-8 font-bold text-center px-4">Are you a true Vexillologist? Let's find out!</h1>
+<h1 class="text-3xl text-center my-4">Your Highscore: {{ user.high_score }} ⭐️</h1>
+
+<!-- Change Game Mode button (in-game) -->
+<div class="flex justify-center mb-4">
+    <button
+        onclick="document.getElementById('change_gamemode_modal').showModal()"
+        class="btn btn-warning">
+        🔄 Change Game Mode
+    </button>
+</div>
+
+<div class="flex flex-col gap-4 w-full px-4 md:px-0 md:w-150 mb-24">
+    <div class="flex flex-col items-center border-success border-1 rounded-2xl p-8">
+        {% if random_country %}
+        <h1 class="text-8xl">
+            <img src="{{ random_country.flag_image_url }}" class="h-[1em] object-contain drop-shadow-md inline-block rounded-md flag-pop" alt="Flag">
+        </h1>
+        <h1 class="text-4xl mt-4 font-bold text-center">What country or territory is this?</h1>
+        {% else %}
+        <h1 class="text-2xl mt-8 font-bold">Error...</h1>
+        {% endif %}
+
+        <form class="flex flex-col items-center justify-center mt-4 w-full" method="post" action="{% url 'quiz' %}">
+            {% csrf_token %}
+            <!-- Relative wrapper so the dropdown can be absolutely positioned below the input -->
+            <div class="relative w-full max-w-xs">
+                <input
+                id="guess"
+                type="text"
+                placeholder="Guess the country..."
+                class="input input-success text- w-full text-xl text-center"
+                name="guess"
+                autocomplete="off"
+                hx-get="{% url 'search_guesses' %}"
+                hx-trigger="keyup[event.key !== 'Tab'] changed"
+                hx-target="#guesses"
+                hx-on::before-request="document.getElementById('guesses').classList.add('opacity-50');"
+                hx-on::after-request="document.getElementById('guesses').classList.remove('opacity-50');"
+                required
+                />
+                <!-- Dropdown anchored directly below the input -->
+                <div id="guesses" class="absolute top-full left-0 right-0 z-50 mt-1 transition-opacity duration-150">
+                    {% include 'guesses.html' %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success mt-4 text-2xl">Guess</button>
+        </form>
+
+        <h1 class="text-2xl mt-4 font-bold streak-appear">Streak: {{ streak }}🔥</h1>
+        {% if pool_size %}
+        <p class="text-xl text-base-content mt-2">{{ streak }} / {{ pool_size }} flags named</p>
+        {% endif %}
+
+        <button id="fact-button" onclick="showFact()" class="btn btn-info mt-4">Hint</button>
+        <p id="fact" class="hidden text-xl text-base-content mt-4 italic text-center">{{ random_country.fact }}</p>
+        <script>
+            fact = document.getElementById("fact");
+            button = document.getElementById("fact-button")
+            function showFact() {
+                fact.classList.remove('hidden')
+                button.classList.add('hidden')
+            }
+        </script>
+    </div>
+
+    <div class="flex flex-col items-center border-success border-1 rounded-2xl p-8 md:h-130 overflow-y-auto">
+        <h1 class="text-2xl font-bold shrink-0">Collection 🚩</h1>
+        {% if collected_flags %}
+            <div class="flex flex-wrap items-center justify-center gap-2 mt-2">
+                {% for flag in collected_flags %}
+                    <img src="{{ flag }}" class="h-10 w-auto inline-block drop-shadow-sm rounded-sm" alt="Flag">
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Change Gamemode Warning Modal -->
+<dialog id="change_gamemode_modal" class="modal">
+    <div class="modal-box flex flex-col items-center gap-4">
+        <h3 class="text-xl font-bold text-center">⚠️ Change Game Mode?</h3>
+        <p class="text-center text-base-content/75">
+            Changing the game mode will <span class="text-error font-semibold">forfeit your current game</span> and reset your streak.
+        </p>
+        <div class="modal-action w-full justify-center mt-0 gap-3">
+            <form method="dialog">
+                <button class="btn btn-ghost">Cancel</button>
+            </form>
+            <a href="{% url 'change_gamemode' %}" class="btn btn-error">Forfeit & Change</a>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>Close</button>
+    </form>
+</dialog>
+
+<!-- Game Over / Victory Modal -->
+{% if game_over or game_won %}
+<dialog id="game_over_modal" class="modal">
+    <div class="modal-box flex flex-col items-center gap-4">
+
+        {% if game_won %}
+        <!-- Victory Header -->
+        <h3 class="text-2xl font-bold text-center text-success">🎉 You won the {{ gamemode_name }} Challenge!</h3>
+        <p class="text-center text-base-content/70 text-sm">You named every single flag without a mistake. Amazing job!</p>
+        {% else %}
+        <!-- Defeat Header -->
+        <h3 class="text-2xl font-bold text-center">Game Over 😢 It was <span class="text-error">{{ truth_name }} 🚩</span></h3>
+        <img src="{{ truth_flag }}" class="h-18 w-auto inline-block drop-shadow-sm rounded-sm" alt="Flag">
+        {% endif %}
+
+        <div class="divider my-0"></div>
+
+        <div class="flex flex-col sm:flex-row gap-6 items-center justify-center w-full">
+            <div class="flex flex-col items-center">
+                <span class="text-4xl font-bold {% if game_won %}text-success{% else %}text-warning{% endif %} mt-0">{{ final_streak }}</span>
+                <span class="text-sm text-base-content mt-1">{% if game_won %}Flags Named 🚩{% else %}Streak 🔥{% endif %}</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="text-4xl font-bold text-warning mt-0">{{ user.high_score }}</span>
+                <span class="text-sm text-base-content mt-1">High Score ⭐</span>
+            </div>
+        </div>
+
+        <div class="w-full">
+            <h4 class="text-xl font-semibold text-center mb-2">Collected Flags 🚩</h4>
+            {% if final_collected_flags %}
+                <div class="flex flex-wrap items-center justify-center gap-2 max-h-40 overflow-y-auto p-1">
+                    {% for flag in final_collected_flags %}
+                        <img src="{{ flag }}" class="h-10 w-auto inline-block drop-shadow-sm rounded-sm" alt="Flag">
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-center text-base-content text-sm">No flags collected this round.</p>
+            {% endif %}
+        </div>
+
+        <div class="modal-action w-full justify-center mt-0 gap-2 flex-wrap">
+            <form method="dialog" class="flex gap-2 flex-wrap justify-center">
+                <button class="btn btn-success px-8">Play Again</button>
+                <a href="{% url 'mastery' %}" class="btn btn-primary px-8">See Mastery</a>
+                <a href="{% url 'change_gamemode' %}" class="btn btn-warning px-6">Change Mode</a>
+            </form>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>Close</button>
+    </form>
+</dialog>
+<script>
+    document.getElementById('game_over_modal').showModal();
+</script>
+{% endif %}
+
+<script>
+    const input = document.getElementById('guess');
+    const guessesDropdown = document.getElementById('guesses');
+
+    function sendText(text) {
+        input.value = text;
+        input.classList.add('bg-success');
+        guessesDropdown.innerHTML = '';
+        input.focus();
+    }
+
+    // Close dropdown when clicking outside the input or dropdown
+    document.addEventListener('click', (e) => {
+        if (!guessesDropdown.contains(e.target) && e.target !== input) {
+            guessesDropdown.innerHTML = '';
+        }
+    });
+
+    // Close dropdown on Escape
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            guessesDropdown.innerHTML = '';
+        }
+    });
+
+    // Send text via Tab
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            firstGuess = guessesDropdown.children[0].children[0].textContent.trim();
+            sendText(firstGuess);
+        }
+    });
+
+    // 
+    input.addEventListener('keydown', (e) => {
+        if (!input.value) {
+            input.classList.remove('bg-success');
+        }
+    });
+</script>

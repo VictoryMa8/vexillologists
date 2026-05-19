@@ -25,7 +25,6 @@ button.card {
                 box-shadow 150ms ease,
                 background-color 150ms ease;
 }
-
 button.card:hover {
     transform: translateY(-8px);
 }
@@ -40,12 +39,10 @@ a.country-card {
                 box-shadow 150ms ease,
                 background-color 200ms ease;
 }
-
 a.country-card:hover {
     transform: translateY(-10px);
     box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.2);
 }
-
 a.country-card:active {
     transform: scale(0.8);
     transition-duration: 100ms;
@@ -54,7 +51,7 @@ a.country-card:active {
 /* Bouncy flag entrance when a new flag loads in the quiz */
 @keyframes flag-pop {
     0%   { transform: scale(0.5) rotate(-3deg); opacity: 0; }
-    66%  { transform: scale(1.5) rotate(6deg);  opacity: 0.5; }
+    66%  { transform: scale(1.5) rotate(6deg);  opacity: 0.66; }
     100% { transform: scale(1)   rotate(0deg);   opacity: 1; }
 }
 

@@ -9,18 +9,18 @@
 {% endif %}
 
 {% if chosen_country.fact %}
-<div class="flex items-start gap-2 bg-success-content border border-success text-white mx-4 mt-6 px-6 py-4 rounded-2xl max-w-2xl">
+<div class="flex items-start gap-2 bg-success-content border border-success text-white mx-4 mt-6 px-6 py-4 rounded-2xl max-w-xl">
     <span class="text-2xl shrink-0">💡</span>
     <p class="text-lg leading-relaxed">{{ chosen_country.fact }}</p>
 </div>
 {% endif %}
 
-<div class="flex flex-col bg-success-content text-white p-8 my-4 mx-4 rounded-2xl">
-    <h2 class="text-2xl md:text-4xl">Type: {{ chosen_country.entry_type }}</h2>
-    <h2 class="text-2xl md:text-4xl mt-4">Capital: {{ chosen_country.capital }}</h2>
-    <h2 class="text-2xl md:text-4xl mt-4">Population: {{ chosen_country.population_2024 }}</h2>
-    <h2 class="text-2xl md:text-4xl mt-4">Area: {{ chosen_country.area_km2 }} km²</h2>
-    <h2 class="text-2xl md:text-4xl mt-4">Official Language: {{ chosen_country.official_language }}</h2>
-    <h2 class="text-2xl md:text-4xl mt-4">Region: {{ chosen_country.region }}</h2>
+<div class="flex flex-col gap-4 bg-success-content border border-success text-white p-8 m-4 rounded-2xl text-2xl font-[Alegreya]">
+    <h2><b>Type: </b>{{ chosen_country.entry_type }}</h2>
+    <h2><b>Capital: </b>{{ chosen_country.capital }}</h2>
+    <h2><b>Population: </b>{{ chosen_country.population_2024 }}</h2>
+    <h2><b>Area: </b>{{ chosen_country.area_km2 }} km²</h2>
+    <h2><b>Official Language: </b>{{ chosen_country.official_language }}</h2>
+    <h2><b>Region: </b>{{ chosen_country.region }}</h2>
 </div>
 {% endblock %}
