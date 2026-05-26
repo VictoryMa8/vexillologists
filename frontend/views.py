@@ -14,8 +14,24 @@ from .models import Country, Vexillologist
 import random
 import requests
 
-# Create your views here.
-# Users who are not logged in can only access index, signup, and login
+
+def get_client_ip(request):
+    """
+    Behind Fly.io's proxy, REMOTE_ADDR is always Fly's internal IP, not the user's
+
+    Fly sets the real client IP in the Fly-Client-IP header
+    Falls back to X-Forwarded-For, then REMOTE_ADDR for local dev
+    """
+    fly_ip = request.META.get('HTTP_FLY_CLIENT_IP')
+    if fly_ip:
+        return fly_ip.strip()
+
+    xff = request.META.get('HTTP_X_FORWARDED_FOR')
+    if xff:
+        # Rightmost entry is the one the proxy itself saw (most trustworthy)
+        return xff.split(',')[-1].strip()
+
+    return request.META.get('REMOTE_ADDR', 'unknown')
 
 """
 The key used to store the country list in the cache
@@ -199,14 +215,18 @@ def signup(request):
     # On the sign up page, get the form with post
     if request.method == 'POST':
         token = request.POST.get('g-recaptcha-response', '')
-        # Verify with Google
-        # Use requests library to send a POST request to the Google Recaptcha API
-        resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data={
-            'secret': django_settings.RECAPTCHA_SECRET_KEY,
-            'response': token,
-        })
-        # If the CAPTCHA is not successful, show an error message and render the signup page again
-        if not resp.json().get('success'):
+        # Verify the CAPTCHA with Google -- timeout so a slow Google can't freeze the site
+        captcha_ok = False
+        try:
+            resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data={
+                'secret': django_settings.RECAPTCHA_SECRET_KEY,
+                'response': token,
+            }, timeout=(5, 10))
+            captcha_ok = resp.json().get('success', False)
+        except requests.exceptions.RequestException:
+            pass  # Network error -- treat as failed CAPTCHA
+
+        if not captcha_ok:
             messages.error(request, 'Please complete the CAPTCHA.')
             return render(request, 'signup.html', {
                 'form': VexillologistCreationForm(),
@@ -238,11 +258,7 @@ def signup(request):
 
 def login_view(request):
     if request.method == 'POST':
-        # request.META contains all the metadata of the HTTP request (the HTTP headers) that is coming to our Django server, it can contain the user agent, ip address, content type, and so on
-        
-        # REMOTE_ADDR is the key for the connecting IP address, we use it to identify who is making the request
-        # Otherwise unknown
-        ip = request.META.get('REMOTE_ADDR', 'unknown')
+        ip = get_client_ip(request)
         cache_key = f'login_attempts_{ip}'
         attempts = cache.get(cache_key, 0)
 
@@ -479,9 +495,9 @@ def quiz(request):
 
         # Pick the next country from the gamemode pool, excluding already-collected ones
         gm = GAMEMODES.get(gamemode_key, GAMEMODES['world_tour'])
-        # Get the countries for the gamemode
         pool = gm['filter'](get_countries())
-        # Get the countries that are not in the collected names
+        if not pool:
+            return redirect('quiz')
         available = [c for c in pool if c['name'] not in collected_names]
         if not available:
             available = pool
@@ -509,6 +525,8 @@ def quiz(request):
 @login_required
 def change_gamemode(request):
     """Clear all quiz session state so the player is returned to the gamemode selection screen."""
+    if request.method != 'POST':
+        return redirect('quiz')
     for key in ['quiz_gamemode', 'quiz_country', 'quiz_streak',
                 'quiz_collected_flags', 'quiz_collected_names', 'quiz_result', 'quiz_pool_size']:
         request.session.pop(key, None)

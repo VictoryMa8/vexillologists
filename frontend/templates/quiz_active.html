@@ -88,7 +88,10 @@
             <form method="dialog">
                 <button class="btn btn-ghost">Cancel</button>
             </form>
-            <a href="{% url 'change_gamemode' %}" class="btn btn-error">Forfeit & Change</a>
+            <form method="post" action="{% url 'change_gamemode' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-error">Forfeit & Change</button>
+            </form>
         </div>
     </div>
     <form method="dialog" class="modal-backdrop">
@@ -141,7 +144,10 @@
             <form method="dialog" class="flex gap-2 flex-wrap justify-center">
                 <button class="btn btn-success px-8">Play Again</button>
                 <a href="{% url 'mastery' %}" class="btn btn-primary px-8">See Mastery</a>
-                <a href="{% url 'change_gamemode' %}" class="btn btn-warning px-6">Change Mode</a>
+            </form>
+            <form method="post" action="{% url 'change_gamemode' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-warning px-6">Change Mode</button>
             </form>
         </div>
     </div>
