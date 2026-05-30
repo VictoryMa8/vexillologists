@@ -1,6 +1,12 @@
 <!-- Active Game -->
 <h1 class="text-4xl mt-8 font-bold text-center px-4">Are you a true Vexillologist? Let's find out!</h1>
+{% if user.is_authenticated %}
 <h1 class="text-3xl text-center my-4">Your Highscore: {{ user.high_score }} ⭐️</h1>
+{% else %}
+<p class="text-lg text-center my-4 text-base-content/70">
+    Playing as a guest.
+</p>
+{% endif %}
 
 <!-- Change Game Mode button (in-game) -->
 <div class="flex justify-center mb-4">
@@ -121,11 +127,19 @@
                 <span class="text-4xl font-bold {% if game_won %}text-success{% else %}text-warning{% endif %} mt-0">{{ final_streak }}</span>
                 <span class="text-sm text-base-content mt-1">{% if game_won %}Flags Named 🚩{% else %}Streak 🔥{% endif %}</span>
             </div>
+            {% if user.is_authenticated %}
             <div class="flex flex-col items-center">
                 <span class="text-4xl font-bold text-warning mt-0">{{ user.high_score }}</span>
                 <span class="text-sm text-base-content mt-1">High Score ⭐</span>
             </div>
+            {% endif %}
         </div>
+
+        {% if not user.is_authenticated %}
+        <p class="text-center text-base-content/70 text-sm">
+            You're playing as a guest, so this score wasn't saved.
+        </p>
+        {% endif %}
 
         <div class="w-full">
             <h4 class="text-xl font-semibold text-center mb-2">Collected Flags 🚩</h4>
@@ -143,7 +157,11 @@
         <div class="modal-action w-full justify-center mt-0 gap-2 flex-wrap">
             <form method="dialog" class="flex gap-2 flex-wrap justify-center">
                 <button class="btn btn-success px-8">Play Again</button>
+                {% if user.is_authenticated %}
                 <a href="{% url 'mastery' %}" class="btn btn-primary px-8">See Mastery</a>
+                {% else %}
+                <a href="{% url 'signup' %}" class="btn btn-primary px-8">Sign Up</a>
+                {% endif %}
             </form>
             <form method="post" action="{% url 'change_gamemode' %}">
                 {% csrf_token %}

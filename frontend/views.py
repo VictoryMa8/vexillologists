@@ -311,7 +311,6 @@ def search_countries(request):
 
     return render(request, "list.html", context={'countries': filtered_countries })
 
-@login_required
 def search_guesses(request):
     countries = get_countries()
     query = request.GET.get("guess", "")
@@ -328,7 +327,6 @@ def country(request, country_name):
     else:
         return redirect("/")
 
-@login_required
 def quiz(request):
     """
     Reworked to use session data instead of hidden form fields
@@ -378,7 +376,15 @@ def quiz(request):
         # No gamemode selected yet: show the gamemode selection screen
         if 'quiz_gamemode' not in request.session:
             countries = get_countries()
-            mastered_names = set(request.user.mastered_flags.values_list('name', flat=True))
+            # Get the set of country names the authenticated user has mastered
+            # If the user is not logged in, use an empty set
+            if request.user.is_authenticated:
+                # Get all mastered flag Country names for the current user as a set
+                mastered_flag_names_queryset = request.user.mastered_flags.values_list('name', flat=True)
+                mastered_names = set(mastered_flag_names_queryset)
+            else:
+                mastered_names = set()
+ 
             gamemode_progress = {
                 key: {
                     'mastered': len({c['name'] for c in gm['filter'](countries)} & mastered_names),
@@ -438,6 +444,8 @@ def quiz(request):
         truth_flag = truth['flag_image_url']
     
         user = request.user
+        # Anonymous players can still play; we just skip persisting their progress
+        is_authenticated = user.is_authenticated
         # Get the gamemode key from the session, default to world_tour if not set
         gamemode_key = request.session.get('quiz_gamemode', 'world_tour')
         pool_size = request.session.get('quiz_pool_size', 0)
@@ -454,7 +462,7 @@ def quiz(request):
             collected_flags = collected_flags + [truth_flag]
             collected_names = collected_names + [truth_name]
 
-            if streak > user.high_score:
+            if is_authenticated and streak > user.high_score:
                 user.high_score = streak
                 update_fields.append('high_score')
 
@@ -463,14 +471,15 @@ def quiz(request):
                 game_won = True
                 final_streak = streak
                 final_collected_flags = collected_flags[:]
-                if collected_names:
-                    mastered = Country.objects.filter(name__in=collected_names)
-                    user.mastered_flags.add(*mastered)
+                if is_authenticated:
+                    if collected_names:
+                        mastered = Country.objects.filter(name__in=collected_names)
+                        user.mastered_flags.add(*mastered)
+                    user.games_played = F('games_played') + 1
+                    update_fields.append('games_played')
                 streak = 0
                 collected_flags = []
                 collected_names = []
-                user.games_played = F('games_played') + 1
-                update_fields.append('games_played')
             else:
                 messages.success(request, f"Correct 🥳 It was {truth_name}!")
 
@@ -478,15 +487,16 @@ def quiz(request):
             game_over = True
             final_streak = streak
             final_collected_flags = collected_flags[:]
-            
-            if collected_names:
-                mastered = Country.objects.filter(name__in=collected_names)
-                user.mastered_flags.add(*mastered)
+
+            if is_authenticated:
+                if collected_names:
+                    mastered = Country.objects.filter(name__in=collected_names)
+                    user.mastered_flags.add(*mastered)
+                user.games_played = F('games_played') + 1
+                update_fields.append('games_played')
             streak = 0
             collected_flags = []
             collected_names = []
-            user.games_played = F('games_played') + 1
-            update_fields.append('games_played')
             messages.error(request, f"Noooo 😢 it was {truth_name}")
 
         # Only hit the database if there is actually something to update
@@ -522,7 +532,6 @@ def quiz(request):
     else:
         return redirect('quiz')
 
-@login_required
 def change_gamemode(request):
     """Clear all quiz session state so the player is returned to the gamemode selection screen."""
     if request.method != 'POST':
@@ -531,7 +540,8 @@ def change_gamemode(request):
                 'quiz_collected_flags', 'quiz_collected_names', 'quiz_result', 'quiz_pool_size']:
         request.session.pop(key, None)
     return redirect('quiz')
-    
+
+@login_required
 def leaderboard(request):
     top_players = Vexillologist.objects.order_by('-high_score')[:10]
     return render(request, 'leaderboard.html', {'top_players': top_players, 'current_user': request.user})
