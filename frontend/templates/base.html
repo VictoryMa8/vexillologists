@@ -67,6 +67,58 @@
 {% endblock %}
 
 {% include 'footer.html' %}
+
+<script>
+    // Quiz dropdown helpers — bound once on the document so they survive HTMX swaps.
+    // Each handler looks up the elements at call time, so they work after content is replaced.
+
+    function sendText(text) {
+        const input = document.getElementById('guess');
+        const guessesDropdown = document.getElementById('guesses');
+        if (!input || !guessesDropdown) return;
+        input.value = text;
+        input.classList.add('bg-success');
+        guessesDropdown.innerHTML = '';
+        input.closest('form').requestSubmit();
+    }
+
+    document.addEventListener('click', function (e) {
+        const guessesDropdown = document.getElementById('guesses');
+        const input = document.getElementById('guess');
+        if (!guessesDropdown || !input) return;
+        if (!guessesDropdown.contains(e.target) && e.target !== input) {
+            guessesDropdown.innerHTML = '';
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        const input = document.getElementById('guess');
+        const guessesDropdown = document.getElementById('guesses');
+        if (!input || !guessesDropdown || document.activeElement !== input) return;
+
+        if (e.key === 'Escape') {
+            guessesDropdown.innerHTML = '';
+        }
+
+        if (e.key === 'Tab' || e.key === 'Enter') {
+            const firstButton = guessesDropdown.querySelector('button');
+            if (firstButton) {
+                e.preventDefault();
+                sendText(firstButton.textContent.trim());
+            }
+        }
+
+        if (!input.value) {
+            input.classList.remove('bg-success');
+        }
+    });
+
+    // Focus the guess input after every HTMX swap (fixes the click-to-type complaint).
+    document.addEventListener('htmx:afterSettle', function () {
+        const input = document.getElementById('guess');
+        if (input) input.focus();
+    });
+</script>
 </body>
 
 </html>

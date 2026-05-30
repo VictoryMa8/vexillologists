@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.contrib.postgres.fields import ArrayField
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.core.cache import cache
@@ -27,6 +28,12 @@ class Country(models.Model):
     region = models.CharField(max_length=100, null=True, blank=True)
     entry_type = models.CharField(max_length=100, default="Country", help_text="e.g. Country, Autonomous Region, Territory")
     fact = models.TextField(null=True, blank=True, help_text="An interesting fact about this place")
+    aliases = ArrayField(
+        models.CharField(max_length=50),
+        blank=True,
+        default=list,
+        help_text="Common abbreviations or alternate names accepted as quiz answers (e.g. DRC, USA, UK)",
+    )
 
     def __str__(self):
         return self.name
@@ -43,4 +50,4 @@ Without this, an admin edit would be invisible until the 1-hour TTL expires
 @receiver(post_save, sender=Country)
 @receiver(post_delete, sender=Country)
 def invalidate_countries_cache(sender, **kwargs):
-    cache.delete('countries:v1')
+    cache.delete('countries:v2')

@@ -1,3 +1,5 @@
+<div id="quiz-active" class="flex flex-col items-center w-full">
+
 <!-- Active Game -->
 <h1 class="text-4xl mt-8 font-bold text-center px-4">Are you a true Vexillologist? Let's find out!</h1>
 {% if user.is_authenticated %}
@@ -28,7 +30,13 @@
         <h1 class="text-2xl mt-8 font-bold">Error...</h1>
         {% endif %}
 
-        <form class="flex flex-col items-center justify-center mt-4 w-full" method="post" action="{% url 'quiz' %}">
+        <form class="flex flex-col items-center justify-center mt-4 w-full"
+              hx-post="{% url 'quiz' %}"
+              hx-target="#quiz-active"
+              hx-swap="outerHTML"
+              hx-on::before-request="document.getElementById('submit-btn').classList.add('loading')"
+              hx-on::after-request="document.getElementById('submit-btn').classList.remove('loading')"
+              >
             {% csrf_token %}
             <!-- Relative wrapper so the dropdown can be absolutely positioned below the input -->
             <div class="relative w-full max-w-xs">
@@ -39,11 +47,11 @@
                 class="input input-success text- w-full text-xl text-center"
                 name="guess"
                 autocomplete="off"
+                autofocus
                 hx-get="{% url 'search_guesses' %}"
-                hx-trigger="keyup[event.key !== 'Tab'] changed"
+                hx-trigger="keyup[event.key !== 'Tab' && event.key !== 'Enter'] changed"
                 hx-target="#guesses"
-                hx-on::before-request="document.getElementById('guesses').classList.add('opacity-50');"
-                hx-on::after-request="document.getElementById('guesses').classList.remove('opacity-50');"
+                hx-swap="innerHTML"
                 required
                 />
                 <!-- Dropdown anchored directly below the input -->
@@ -51,7 +59,7 @@
                     {% include 'guesses.html' %}
                 </div>
             </div>
-            <button type="submit" class="btn btn-success mt-4 text-2xl">Guess</button>
+            <button id="submit-btn" type="submit" class="btn btn-success mt-4 text-2xl">Guess</button>
         </form>
 
         <h1 class="text-2xl mt-4 font-bold streak-appear">Streak: {{ streak }}🔥</h1>
@@ -62,11 +70,12 @@
         <button id="fact-button" onclick="showFact()" class="btn btn-info mt-4">Hint</button>
         <p id="fact" class="hidden text-xl text-base-content mt-4 italic text-center">{{ random_country.fact }}</p>
         <script>
+            // Inline so fact/button refs reset on every HTMX swap to the new elements
             fact = document.getElementById("fact");
-            button = document.getElementById("fact-button")
+            button = document.getElementById("fact-button");
             function showFact() {
-                fact.classList.remove('hidden')
-                button.classList.add('hidden')
+                fact.classList.remove('hidden');
+                button.classList.add('hidden');
             }
         </script>
     </div>
@@ -178,44 +187,4 @@
 </script>
 {% endif %}
 
-<script>
-    const input = document.getElementById('guess');
-    const guessesDropdown = document.getElementById('guesses');
-
-    function sendText(text) {
-        input.value = text;
-        input.classList.add('bg-success');
-        guessesDropdown.innerHTML = '';
-        input.focus();
-    }
-
-    // Close dropdown when clicking outside the input or dropdown
-    document.addEventListener('click', (e) => {
-        if (!guessesDropdown.contains(e.target) && e.target !== input) {
-            guessesDropdown.innerHTML = '';
-        }
-    });
-
-    // Close dropdown on Escape
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            guessesDropdown.innerHTML = '';
-        }
-    });
-
-    // Send text via Tab
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab') {
-            e.preventDefault();
-            firstGuess = guessesDropdown.children[0].children[0].textContent.trim();
-            sendText(firstGuess);
-        }
-    });
-
-    // 
-    input.addEventListener('keydown', (e) => {
-        if (!input.value) {
-            input.classList.remove('bg-success');
-        }
-    });
-</script>
+</div>

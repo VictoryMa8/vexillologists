@@ -40,7 +40,7 @@ The :v1 suffix is a versioning trick; if we ever change the shape of the
 dictionaries below (add a key, rename one), we bump this to :v2 and all
 old cached values simply age out on their own
 """
-COUNTRIES_CACHE_KEY = 'countries:v1'
+COUNTRIES_CACHE_KEY = 'countries:v2'
 
 """
 How long (in seconds) to keep the cached list before Django discards it and
@@ -58,9 +58,26 @@ def filter_countries(countries, query="", continent="", min_area=None, min_popul
 
     result = countries
 
-    # Filter the countries based on the query, continent, entry type, min area, and min population
+    # For each country, check two things:
+    # Does the country's name start with the provided query string?
+    # Do any of the country's aliases start with the query string?
+    # If either condition is true, we include that country in the filtered result
     if query:
-        result = [c for c in result if c['name'].lower().startswith(query)]
+        filtered_countries = []
+        for country in result:
+            country_name = country['name'].lower()
+            country_aliases = [alias.lower() for alias in country.get('aliases', [])]
+
+            # Check if the country's name matches the start of the query
+            name_matches = country_name.startswith(query)
+
+            # Check if any alias matches the start of the query
+            alias_matches = any(alias.startswith(query) for alias in country_aliases)
+
+            if name_matches or alias_matches:
+                filtered_countries.append(country)
+
+        result = filtered_countries
     if continent:
         result = [c for c in result if (c.get('region') or "") == continent]
     if entry_type:
@@ -102,6 +119,7 @@ def get_countries():
             'region': c.region,
             'entry_type': c.entry_type,
             'fact': c.fact,
+            'aliases': c.aliases,
         }
         for c in Country.objects.all().order_by('name')
     ]
@@ -317,7 +335,6 @@ def search_guesses(request):
     filtered_countries = filter_countries(countries, query=query)
     return render(request, "guesses.html", context={'countries': filtered_countries })
 
-@login_required
 def country(request, country_name):
     countries = get_countries()
     # Slugify makes it a cleaner string
@@ -457,14 +474,25 @@ def quiz(request):
         final_streak = 0
         final_collected_flags = []
 
-        if truth_name.lower() == guess.lower():
+        truth_aliases = truth.get('aliases', [])
+
+        # Determine if the user's guess is correct by checking two conditions:
+        # Does the guess exactly match the primary name of the country/territory?
+        # Does the guess exactly match any value in the list of accepted aliases for this country?
+        guess_is_primary_name = truth_name.lower() == guess.lower()
+        guess_is_alias = False
+
+        for alias in truth_aliases:
+            if guess.lower() == alias.lower():
+                guess_is_alias = True
+                break
+        
+        guess_correct = guess_is_primary_name or guess_is_alias
+        
+        if guess_correct:
             streak += 1
             collected_flags = collected_flags + [truth_flag]
             collected_names = collected_names + [truth_name]
-
-            if is_authenticated and streak > user.high_score:
-                user.high_score = streak
-                update_fields.append('high_score')
 
             # Win condition: player has guessed every country in the pool
             if pool_size > 0 and len(collected_names) >= pool_size:
@@ -472,6 +500,9 @@ def quiz(request):
                 final_streak = streak
                 final_collected_flags = collected_flags[:]
                 if is_authenticated:
+                    if final_streak > user.high_score:
+                        user.high_score = final_streak
+                        update_fields.append('high_score')
                     if collected_names:
                         mastered = Country.objects.filter(name__in=collected_names)
                         user.mastered_flags.add(*mastered)
@@ -481,7 +512,14 @@ def quiz(request):
                 collected_flags = []
                 collected_names = []
             else:
-                messages.success(request, f"Correct 🥳 It was {truth_name}!")
+                """
+                When a user submits the guess form normally (no JS), the browser sends a plain POST with no HX-Request header — so request.htmx is falsy and you follow the old PRG (Post/Redirect/Get) path, which prevents resubmission on refresh.
+
+                When HTMX submits the guess form, request.htmx is truthy and you skip the redirect entirely, returning the partial HTML directly. HTMX then swaps it into the page without a full reload.
+                """
+                # This is essentially if request.META.get('HTTP_HX_REQUEST') == 'false':
+                if not request.htmx:
+                    messages.success(request, f"Correct 🥳 It was {truth_name}!")
 
         else:
             game_over = True
@@ -489,6 +527,9 @@ def quiz(request):
             final_collected_flags = collected_flags[:]
 
             if is_authenticated:
+                if final_streak > user.high_score:
+                    user.high_score = final_streak
+                    update_fields.append('high_score')
                 if collected_names:
                     mastered = Country.objects.filter(name__in=collected_names)
                     user.mastered_flags.add(*mastered)
@@ -497,7 +538,8 @@ def quiz(request):
             streak = 0
             collected_flags = []
             collected_names = []
-            messages.error(request, f"Noooo 😢 it was {truth_name}")
+            if not request.htmx:
+                messages.error(request, f"Noooo 😢 it was {truth_name}")
 
         # Only hit the database if there is actually something to update
         if update_fields:
@@ -511,14 +553,32 @@ def quiz(request):
         available = [c for c in pool if c['name'] not in collected_names]
         if not available:
             available = pool
-            
+
         random_country = random.choice(available)
         request.session['quiz_country'] = random_country
         request.session['quiz_streak'] = streak
         request.session['quiz_collected_flags'] = collected_flags
         request.session['quiz_collected_names'] = collected_names
 
-        # Store the result in the session and redirect to GET (prevents form resubmission on refresh)
+        # HTMX guess: return the active-game partial directly
+        # no page flash, input focus is restored by htmx:afterSettle in base.html.
+        if request.htmx:
+            gamemode_name = GAMEMODES.get(gamemode_key, GAMEMODES['world_tour'])['name']
+            return render(request, 'quiz_active.html', {
+                'random_country': random_country,
+                'streak': streak,
+                'collected_flags': collected_flags,
+                'game_over': game_over,
+                'game_won': game_won,
+                'final_streak': final_streak,
+                'final_collected_flags': final_collected_flags,
+                'truth_name': truth_name if not game_won else '',
+                'truth_flag': truth_flag if not game_won else '',
+                'gamemode_name': gamemode_name,
+                'pool_size': pool_size,
+            })
+
+        # Non-HTMX fallback (JS disabled): keep the PRG pattern so refresh doesn't resubmit.
         request.session['quiz_result'] = {
             'game_over': game_over,
             'game_won': game_won,
