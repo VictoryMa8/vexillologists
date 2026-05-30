@@ -45,6 +45,13 @@ In contrast, if there is an HTTPS connection between the proxy and Django then i
 # Tell Django it's secure when sitting behind a reverse proxy (like Fly.io, what we're using)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+# HTTPS/security hardening
+SECURE_SSL_REDIRECT = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_HSTS_SECONDS = 0 if DEBUG else 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+SECURE_HSTS_PRELOAD = not DEBUG
+
 # Application definition
 
 INSTALLED_APPS = [

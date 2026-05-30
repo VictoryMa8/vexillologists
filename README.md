@@ -1,6 +1,6 @@
 # Vexillologists.com
 
-Vexillologists.com is a project made by yours truly, Victory Ma. It is a fun, interactive, and replayable flag quizzing game and educational tool for geography and world-politics lovers alike.
+Vexillologists.com is a project made by yours truly. It is a fun, interactive, and replayable flag quizzing game and educational tool for geography and world-politics lovers alike.
 
 **🌍 Live at [vexillologists.com](https://vexillologists.com)**
 
