@@ -581,6 +581,95 @@
       }
     }
   }
+  .dropdown\! {
+    position: relative !important;
+    display: inline-block !important;
+    position-area: var(--anchor-v, bottom) var(--anchor-h, span-right) !important;
+    & > *:not(summary):focus {
+      --tw-outline-style: none !important;
+      outline-style: none !important;
+      @media (forced-colors: active) {
+        outline: 2px solid transparent !important;
+        outline-offset: 2px !important;
+      }
+    }
+    .dropdown-content {
+      position: absolute !important;
+    }
+    &:not(details, .dropdown-open, .dropdown-hover:hover, :focus-within) {
+      .dropdown-content {
+        display: none !important;
+        transform-origin: top !important;
+        opacity: 0% !important;
+        scale: 95% !important;
+      }
+    }
+    &[popover], .dropdown-content {
+      z-index: 999 !important;
+      animation: dropdown 0.2s !important;
+      transition-property: opacity, scale, display !important;
+      transition-behavior: allow-discrete !important;
+      transition-duration: 0.2s !important;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    @starting-style {
+      &[popover], .dropdown-content {
+        scale: 95% !important;
+        opacity: 0 !important;
+      }
+    }
+    &.dropdown-open, &:not(.dropdown-hover):focus, &:focus-within {
+      > [tabindex]:first-child {
+        pointer-events: none !important;
+      }
+      .dropdown-content {
+        opacity: 100% !important;
+      }
+    }
+    &.dropdown-hover:hover {
+      .dropdown-content {
+        opacity: 100% !important;
+        scale: 100% !important;
+      }
+    }
+    &:is(details) {
+      summary {
+        &::-webkit-details-marker {
+          display: none !important;
+        }
+      }
+    }
+    &.dropdown-open, &:focus, &:focus-within {
+      .dropdown-content {
+        scale: 100% !important;
+      }
+    }
+    &:where([popover]) {
+      background: #0000 !important;
+    }
+    &[popover] {
+      position: fixed !important;
+      color: inherit !important;
+      @supports not (position-area: bottom) {
+        margin: auto !important;
+        &.dropdown-open:not(:popover-open) {
+          display: none !important;
+          transform-origin: top !important;
+          opacity: 0% !important;
+          scale: 95% !important;
+        }
+        &::backdrop {
+          background-color: color-mix(in oklab, #000 30%, #0000) !important;
+        }
+      }
+      &:not(.dropdown-open, :popover-open) {
+        display: none !important;
+        transform-origin: top !important;
+        opacity: 0% !important;
+        scale: 95% !important;
+      }
+    }
+  }
   .btn {
     :where(&) {
       width: unset;
@@ -2098,6 +2187,9 @@
   }
   .w-full {
     width: 100%;
+  }
+  .w-xl {
+    width: var(--container-xl);
   }
   .max-w-2xl {
     max-width: var(--container-2xl);
