@@ -1,29 +1,28 @@
 <div id="quiz-active" class="flex flex-col items-center w-full">
 
 <!-- Active Game -->
-<h1 class="text-4xl mt-8 font-bold text-center px-4">Are you a true Vexillologist? Let's find out!</h1>
-{% if user.is_authenticated %}
-<h1 class="text-3xl text-center my-4">Your Highscore: {{ user.high_score }} ⭐️</h1>
-{% else %}
-<p class="text-lg text-center my-4 text-base-content/70">
-    Playing as a guest.
-</p>
-{% endif %}
-
+<h1 class="text-4xl mt-6 font-bold text-center">Playing: <span class="text-success italic">{{ gamemode_name }}</span></h1>
 <!-- Change Game Mode button (in-game) -->
-<div class="flex justify-center mb-4">
+<div class="flex justify-center mt-4">
     <button
         onclick="document.getElementById('change_gamemode_modal').showModal()"
         class="btn btn-warning">
         🔄 Change Game Mode
     </button>
 </div>
+{% if user.is_authenticated %}
+<h1 class="text-3xl text-center my-2">Your Highscore: {{ user.high_score }} ⭐️</h1>
+{% else %}
+<p class="text-lg text-center my-2 text-base-content/75 italic">
+    Playing as a guest
+</p>
+{% endif %}
 
 <div class="flex flex-col gap-4 w-full px-4 md:px-0 md:w-150 mb-24">
     <div class="flex flex-col items-center border-success border-1 rounded-2xl p-8">
         {% if random_country %}
         <h1 class="text-8xl">
-            <img src="{{ random_country.flag_image_url }}" class="h-[1em] object-contain drop-shadow-md inline-block rounded-md flag-pop" alt="Flag">
+            <img src="{{ random_country.flag_image_url }}" class="h-[1.5em] object-contain drop-shadow-md inline-block rounded-md flag-pop" alt="Flag">
         </h1>
         <h1 class="text-4xl mt-4 font-bold text-center">What country or territory is this?</h1>
         <p class="text-lg mt-2 italic text-center opacity-50">New: Submit the first suggestion in dropdown with Tab or Enter!</p>
@@ -82,13 +81,14 @@
     </div>
 
     <div class="flex flex-col items-center border-success border-1 rounded-2xl p-8 md:h-130 overflow-y-auto">
-        <h1 class="text-2xl font-bold shrink-0">Collection 🚩</h1>
         {% if collected_flags %}
-            <div class="flex flex-wrap items-center justify-center gap-2 mt-2">
+            <div class="flex flex-wrap items-center justify-center gap-2">
                 {% for flag in collected_flags %}
-                    <img src="{{ flag }}" class="h-10 w-auto inline-block drop-shadow-sm rounded-sm" alt="Flag">
+                    <img src="{{ flag }}" class="h-18 w-auto inline-block drop-shadow-sm rounded-sm" alt="Flag">
                 {% endfor %}
             </div>
+        {% else %}
+        <p class="italic text-base-content opacity-75 text-xl">Collected flags will go here...</p>
         {% endif %}
     </div>
 </div>

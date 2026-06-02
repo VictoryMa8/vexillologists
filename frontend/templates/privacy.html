@@ -3,51 +3,87 @@
 {% block content %}
 <div class="w-full max-w-3xl mx-auto px-4 py-10">
   <h1 class="text-4xl md:text-6xl font-bold mb-2">Privacy Policy 🔒</h1>
-  <p class="text-base-content mb-10">Last updated: May 29, 2026</p>
+  <p class="text-base-content mb-10">Last updated: June 2, 2026</p>
 
   <div class="flex flex-col gap-8 text-lg leading-relaxed">
 
     <section>
       <h2 class="text-2xl font-semibold mb-2">Overview</h2>
-      <p>Vexillologists.com is a passion project created by VM. This policy explains what information we collect, how we use it, and your rights around that data. We collect only what is necessary to run the site.</p>
+      <p>Vexillologists.com is an interactive site that allows users to learn and various flags, countries, territories, and people groups around the world. This policy explains what data we collect, why we collect it, and the choices you have. We collect only the information needed to provide and protect the service.</p>
     </section>
 
     <section>
       <h2 class="text-2xl font-semibold mb-2">Information We Collect</h2>
       <ul class="list-disc list-inside space-y-2 text-base-content/80">
-        <li><span class="font-medium text-base-content">Account Data</span> – we store your username and a hashed (never plain text) password.</li>
-        <li><span class="font-medium text-base-content">Quiz Metrics</span> – your highest streak and total games played are stored so we can show them on the leaderboard and in your profile.</li>
-        <li><span class="font-medium text-base-content">Session Data</span> – a cookie keeps you logged in between page loads. No tracking cookies are used.</li>
+        <li><span class="font-medium text-base-content">Account data</span> - when you create an account, we store your email address, username, and a securely hashed password. If you sign in with Google, we receive the basic profile data needed for authentication.</li>
+        <li><span class="font-medium text-base-content">Gameplay data</span> - we store quiz progress data such as your high score, games played, and collected/mastered flags so your profile and leaderboard stats persist.</li>
+        <li><span class="font-medium text-base-content">Session and security data</span> - we use essential cookies and temporary session data to keep you signed in, maintain quiz state, protect forms, and reduce abuse.</li>
+        <li><span class="font-medium text-base-content">Communication data</span> - if you contact us, we receive the details you choose to include in your message.</li>
       </ul>
     </section>
 
     <section>
       <h2 class="text-2xl font-semibold mb-2">Information We Do Not Collect</h2>
       <ul class="list-disc list-inside space-y-2 text-base-content/80">
-        <li>We do not collect your real name or any personal identifiers beyond a username and "first" or "last" names of your choosing.</li>
-        <li>We do not use third-party advertising or analytics trackers.</li>
-        <li>We do not sell or share your data with any third parties.</li>
+        <li>We do not sell your personal information.</li>
+        <li>We do not collect payment card information.</li>
+        <li>We do not run ad tracking or build marketing profiles from your gameplay.</li>
       </ul>
     </section>
 
     <section>
       <h2 class="text-2xl font-semibold mb-2">How We Use Your Data</h2>
-      <p class="text-base-content/80">Your username and statistics are used solely to power the leaderboard and personalise your quiz experience (i.e. showing your current streak and high score). No data is used for marketing or profiling.</p>
+      <ul class="list-disc list-inside space-y-2 text-base-content/80">
+        <li>Provide core features (account access, quiz gameplay, leaderboard, and mastery).</li>
+        <li>Secure the service (fraud/spam prevention, login protection, and abuse detection).</li>
+        <li>Operate account features (email confirmation, password reset, and support responses).</li>
+        <li>Maintain and improve reliability and performance.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="text-2xl font-semibold mb-2">Cookies & Local Storage</h2>
+      <p class="text-base-content/80">We use essential cookies required for authentication, security, and quiz/session behavior. We also store your theme preference in local storage so your light/dark setting persists.</p>
+    </section>
+
+    <section>
+      <h2 class="text-2xl font-semibold mb-2">Third-Party Services</h2>
+      <ul class="list-disc list-inside space-y-2 text-base-content/80">
+        <li><span class="font-medium text-base-content">Google OAuth</span> - optional sign-in provider used only for account authentication.</li>
+        <li><span class="font-medium text-base-content">Google reCAPTCHA</span> - used on signup to help prevent automated abuse.</li>
+        <li><span class="font-medium text-base-content">Email delivery provider</span> - used for account-related emails, i.e. confirmations and resets.</li>
+        <li><span class="font-medium text-base-content">Infrastructure providers</span> - host and deliver the application and static content securely.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="text-2xl font-semibold mb-2">Legal Bases for Processing</h2>
+      <p class="text-base-content/80">Where required by law, we process data based on legitimate interests (operating and securing the site), contract (providing the service you request), consent (where applicable), and legal obligations.</p>
     </section>
 
     <section>
       <h2 class="text-2xl font-semibold mb-2">Data Retention & Deletion</h2>
-      <p class="text-base-content/80">Your account and all associated data are retained for as long as your account exists. You can permanently delete your account and all related data at any time from the <a href="{% url 'settings' %}" class="text-success hover:text-success-content transition duration-300 ease-in-out">settings</a> page.</p>
+      <p class="text-base-content/80">Account data is retained while your account is active. You can permanently delete your account and associated profile/game data from the <a href="{% url 'settings' %}" class="text-success hover:text-success-content transition duration-300 ease-in-out">settings</a> page. We may keep limited technical records for security, legal, or abuse-prevention purposes when required.</p>
     </section>
 
     <section>
       <h2 class="text-2xl font-semibold mb-2">Security</h2>
-      <p class="text-base-content/80">Passwords are hashed using a sophisticated algorithm before being stored. We use HTTPS in production to protect data in transit.</p>
+      <p class="text-base-content/80">We use industry-standard safeguards, including password hashing and HTTPS in production, to protect data in transit and at rest.</p>
+    </section>
+
+    <section>
+      <h2 class="text-2xl font-semibold mb-2">Your Rights</h2>
+      <p class="text-base-content/80">Depending on your location, you may have rights to access, correct, delete, or restrict certain uses of your personal data. To make a request, contact us and we will respond within a reasonable timeframe.</p>
+    </section>
+
+    <section>
+      <h2 class="text-2xl font-semibold mb-2">Changes to This Policy</h2>
+      <p class="text-base-content/80">We may update this Privacy Policy over time. Material changes will be reflected by updating the "Last updated" date on this page.</p>
     </section>
 
     <section>
       <h2 class="text-2xl font-semibold mb-2">Contact</h2>
-      <p class="text-base-content/80">Questions about this policy? Reach out at <a href="{% url 'contact' %}" class="text-success hover:text-success-content transition duration-300 ease-in-out">support@vexillologists.com</a>.</p>
+      <p class="text-base-content/80">Questions about this policy? Contact us at <a href="{% url 'contact' %}" class="text-success hover:text-success-content transition duration-300 ease-in-out">support@vexillologists.com</a></p>
     </section>
 
   </div>
