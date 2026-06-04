@@ -373,8 +373,7 @@ class QuizTest(TestCase):
             "entry_type": self.country_a.entry_type,
         }
         session["quiz_streak"] = 0
-        session["quiz_collected_flags"] = []
-        session["quiz_collected_names"] = []
+        session["quiz_collected"] = []
         if extra:
             session.update(extra)
         session.save()
@@ -423,8 +422,11 @@ class QuizTest(TestCase):
         # Seed as if the player already correctly guessed Alpha
         self._set_session(extra={
             "quiz_streak": 1,
-            "quiz_collected_flags": [self.country_a.flag_image_url],
-            "quiz_collected_names": [self.country_a.name],
+            "quiz_collected": [{
+                "flag": self.country_a.flag_image_url,
+                "name": self.country_a.name,
+                "fact": self.country_a.fact,
+            }],
             "quiz_country": {
                 "name": self.country_b.name,
                 "flag_image_url": self.country_b.flag_image_url,
@@ -457,8 +459,7 @@ class QuizTest(TestCase):
         self.client.get(reverse("change_gamemode"))
 
         session = self.client.session
-        for key in ["quiz_gamemode", "quiz_country", "quiz_streak",
-                    "quiz_collected_flags", "quiz_collected_names"]:
+        for key in ["quiz_gamemode", "quiz_country", "quiz_streak", "quiz_collected"]:
             self.assertNotIn(key, session)
 
 

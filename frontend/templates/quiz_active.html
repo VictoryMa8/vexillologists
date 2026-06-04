@@ -81,10 +81,11 @@
     </div>
 
     <div class="flex flex-col items-center border-success border-1 rounded-2xl p-8 md:h-130 overflow-y-auto">
-        {% if collected_flags %}
+        {% if collected %}
             <div class="flex flex-wrap items-center justify-center gap-2">
-                {% for flag in collected_flags %}
-                    <img src="{{ flag }}" class="h-18 w-auto inline-block drop-shadow-sm rounded-sm" alt="Flag">
+                {% for i in collected %}
+                    <img src="{{ i.flag }}" title="{{ i.fact }}"
+                         class="h-18 w-auto inline-block drop-shadow-sm rounded-sm cursor-help" alt="Flag">
                 {% endfor %}
             </div>
         {% else %}

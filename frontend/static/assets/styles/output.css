@@ -1631,8 +1631,14 @@
   .right-0 {
     right: calc(var(--spacing) * 0);
   }
+  .bottom-full {
+    bottom: 100%;
+  }
   .left-0 {
     left: calc(var(--spacing) * 0);
+  }
+  .left-1\/2 {
+    left: calc(1/2 * 100%);
   }
   .hero-content {
     isolation: isolate;
@@ -1875,6 +1881,9 @@
     text-transform: uppercase;
     opacity: 60%;
     font-weight: 600;
+  }
+  .mb-1 {
+    margin-bottom: calc(var(--spacing) * 1);
   }
   .mb-2 {
     margin-bottom: calc(var(--spacing) * 2);
@@ -2194,6 +2203,9 @@
   .w-full {
     width: 100%;
   }
+  .w-max {
+    width: max-content;
+  }
   .w-xl {
     width: var(--container-xl);
   }
@@ -2202,6 +2214,9 @@
   }
   .max-w-3xl {
     max-width: var(--container-3xl);
+  }
+  .max-w-64 {
+    max-width: calc(var(--spacing) * 64);
   }
   .max-w-200 {
     max-width: calc(var(--spacing) * 200);
@@ -2230,6 +2245,10 @@
   .shrink-0 {
     flex-shrink: 0;
   }
+  .-translate-x-1\/2 {
+    --tw-translate-x: calc(calc(1/2 * 100%) * -1);
+    translate: var(--tw-translate-x) var(--tw-translate-y);
+  }
   .transform {
     transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
   }
@@ -2248,6 +2267,9 @@
       outline: 2px solid currentColor;
       outline-offset: 2px;
     }
+  }
+  .cursor-help {
+    cursor: help;
   }
   .cursor-not-allowed {
     cursor: not-allowed;
@@ -2344,6 +2366,9 @@
       padding-inline: calc(0.25rem * 3);
       padding-block: calc(0.25rem * 2);
     }
+  }
+  .rounded {
+    border-radius: 0.25rem;
   }
   .rounded-2xl {
     border-radius: var(--radius-2xl);
@@ -2469,6 +2494,9 @@
       background-color: color-mix(in oklab, var(--color-info) 40%, transparent);
     }
   }
+  .bg-neutral {
+    background-color: var(--color-neutral);
+  }
   .bg-primary\/40 {
     background-color: var(--color-primary);
     @supports (color: color-mix(in lab, red, red)) {
@@ -2536,6 +2564,9 @@
     --size: calc(var(--size-selector, 0.25rem) * 5);
     font-size: 0.75rem;
     padding-inline: calc(0.25rem * 2.5 - var(--border));
+  }
+  .px-2 {
+    padding-inline: calc(var(--spacing) * 2);
   }
   .px-3 {
     padding-inline: calc(var(--spacing) * 3);
@@ -2654,6 +2685,9 @@
   .whitespace-normal {
     white-space: normal;
   }
+  .whitespace-nowrap {
+    white-space: nowrap;
+  }
   .link-primary {
     color: var(--color-primary);
     @media (hover: hover) {
@@ -2719,6 +2753,9 @@
   .text-error {
     color: var(--color-error);
   }
+  .text-neutral-content {
+    color: var(--color-neutral-content);
+  }
   .text-red-600 {
     color: var(--color-red-600);
   }
@@ -2736,6 +2773,9 @@
   }
   .italic {
     font-style: italic;
+  }
+  .opacity-0 {
+    opacity: 0%;
   }
   .opacity-40 {
     opacity: 40%;
@@ -2758,6 +2798,10 @@
   }
   .shadow-2xl {
     --tw-shadow: 0 25px 50px -12px var(--tw-shadow-color, rgb(0 0 0 / 0.25));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .shadow-lg {
+    --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 4px 6px -4px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
   .shadow-sm {
@@ -2904,6 +2948,23 @@
   .input-success {
     &, &:focus, &:focus-within {
       --input-color: var(--color-success);
+    }
+  }
+  .group-hover\:opacity-100 {
+    &:is(:where(.group):hover *) {
+      @media (hover: hover) {
+        opacity: 100%;
+      }
+    }
+  }
+  .group-focus\:opacity-100 {
+    &:is(:where(.group):focus *) {
+      opacity: 100%;
+    }
+  }
+  .group-\[\.flag-hint-open\]\:opacity-100 {
+    &:is(:where(.group):is(.flag-hint-open) *) {
+      opacity: 100%;
     }
   }
   .last\:border-b-0 {
@@ -3154,19 +3215,9 @@
       flex-direction: row;
     }
   }
-  .md\:mx-20 {
-    @media (width >= 48rem) {
-      margin-inline: calc(var(--spacing) * 20);
-    }
-  }
   .md\:mx-32 {
     @media (width >= 48rem) {
       margin-inline: calc(var(--spacing) * 32);
-    }
-  }
-  .md\:mx-auto {
-    @media (width >= 48rem) {
-      margin-inline: auto;
     }
   }
   .md\:flex {
@@ -3555,6 +3606,21 @@ a.country-card:active {
     opacity: 0;
   }
 }
+@property --tw-translate-x {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-translate-y {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-translate-z {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
 @property --tw-rotate-x {
   syntax: "*";
   inherits: false;
@@ -3719,24 +3785,12 @@ a.country-card:active {
   syntax: "*";
   inherits: false;
 }
-@property --tw-translate-x {
-  syntax: "*";
-  inherits: false;
-  initial-value: 0;
-}
-@property --tw-translate-y {
-  syntax: "*";
-  inherits: false;
-  initial-value: 0;
-}
-@property --tw-translate-z {
-  syntax: "*";
-  inherits: false;
-  initial-value: 0;
-}
 @layer properties {
   @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
     *, ::before, ::after, ::backdrop {
+      --tw-translate-x: 0;
+      --tw-translate-y: 0;
+      --tw-translate-z: 0;
       --tw-rotate-x: initial;
       --tw-rotate-y: initial;
       --tw-rotate-z: initial;
@@ -3775,9 +3829,6 @@ a.country-card:active {
       --tw-drop-shadow-size: initial;
       --tw-duration: initial;
       --tw-ease: initial;
-      --tw-translate-x: 0;
-      --tw-translate-y: 0;
-      --tw-translate-z: 0;
     }
   }
 }

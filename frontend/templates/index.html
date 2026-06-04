@@ -10,13 +10,13 @@
     <img class="mt-4 h-60 rounded-lg" src="{% static 'assets/images/globe.svg' %}">
     <div>
       {% if user.is_authenticated %}
-      <h1 class="text-4xl md:text-5xl font-bold">Welcome to <i class="font-['Alegreya']">Vexillologists.com</i> <span class="text-success">{{ user.username }}</span>! There's 250+ flags waiting for you 🤩</h1>
+      <h1 class="text-4xl md:text-5xl font-bold">Welcome to <i class="font-['Alegreya']">Vexillologists.com</i> <span class="text-success">{{ user.username }}</span>! There's <span class="text-success">{{ total_count }}</span> flags waiting for you 🤩</h1>
       <h1 class="mt-4 py-4 text-3xl md:text-4xl max-w-200 font-['Alegreya']">
         Start quizzing or learn more about the countries, territories, and people groups below! 👇🤓 Tap on one to learn more 🌎
       </h1>
       {% else %}
       <h1 class="text-4xl md:text-5xl font-bold">Learn about our world and its beautiful cultures through simple, fun activities.</h1>
-      <h2 class="text-4xl md:text-5xl text-success font-['Alegreya']">250 flags and counting!</h2>
+      <h2 class="text-4xl md:text-5xl text-success font-['Alegreya']"><span class="text-success">{{ total_count }}</span> flags and counting!</h2>
       <p class="mt-4 py-4 text-3xl md:text-4xl max-w-200 font-['Alegreya']">
         <a href="{% url 'login' %}" class="text-success hover:text-success-content transition duration-300 ease-in-out">Login</a> if you'd like to save your score, otherwise go ahead! 🤩 🌏
       </p>

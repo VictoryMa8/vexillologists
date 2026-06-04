@@ -131,6 +131,7 @@ def get_countries():
     cache.set(COUNTRIES_CACHE_KEY, result, COUNTRIES_CACHE_TTL)
     return result
 
+
 GAMEMODES = {
     'world_tour': {
         'name': 'World Tour',
@@ -220,6 +221,7 @@ def index(request):
 
     return render(request, 'index.html', context={
         'countries': filtered_countries,
+        'total_count': len(countries),
         'continents': continents,
         'entry_types': entry_types,
         'selected_query': selected_query,
@@ -374,12 +376,12 @@ def quiz(request):
             # so we don't need to touch get_countries() at all here
             random_country = request.session.get('quiz_country')
             streak = request.session.get('quiz_streak', 0)
-            collected_flags = request.session.get('quiz_collected_flags', [])
-            
+            collected = request.session.get('quiz_collected', [])
+
             return render(request, 'quiz.html', context={
                 'random_country': random_country,
                 'streak': streak,
-                'collected_flags': collected_flags,
+                'collected': collected,
                 'game_over': result['game_over'],
                 'game_won': result.get('game_won', False),
                 'final_streak': result['final_streak'],
@@ -421,13 +423,12 @@ def quiz(request):
         
         request.session['quiz_country'] = random_country
         request.session['quiz_streak'] = 0
-        request.session['quiz_collected_flags'] = []
-        request.session['quiz_collected_names'] = []
-        
+        request.session['quiz_collected'] = []
+
         return render(request, 'quiz.html', context={
             'random_country': random_country,
             'streak': 0,
-            'collected_flags': [],
+            'collected': [],
             'gamemode_name': gamemode_name,
             'pool_size': request.session.get('quiz_pool_size', 0),
         })
@@ -449,8 +450,7 @@ def quiz(request):
         """
         truth = request.session.get('quiz_country')
         streak = request.session.get('quiz_streak', 0)
-        collected_flags = request.session.get('quiz_collected_flags', [])
-        collected_names = request.session.get('quiz_collected_names', [])
+        collected = request.session.get('quiz_collected', [])
 
         if not truth:
             return redirect('quiz')
@@ -491,26 +491,29 @@ def quiz(request):
         
         if guess_correct:
             streak += 1
-            collected_flags = collected_flags + [truth_flag]
-            collected_names = collected_names + [truth_name]
+            collected = collected + [{
+                'flag': truth_flag,
+                'name': truth_name,
+                'fact': truth.get('fact') or '',
+            }]
 
             # Win condition: player has guessed every country in the pool
-            if pool_size > 0 and len(collected_names) >= pool_size:
+            if pool_size > 0 and len(collected) >= pool_size:
                 game_won = True
                 final_streak = streak
-                final_collected_flags = collected_flags[:]
+                final_collected_flags = [c['flag'] for c in collected]
                 if is_authenticated:
                     if final_streak > user.high_score:
                         user.high_score = final_streak
                         update_fields.append('high_score')
+                    collected_names = [c['name'] for c in collected]
                     if collected_names:
                         mastered = Country.objects.filter(name__in=collected_names)
                         user.mastered_flags.add(*mastered)
                     user.games_played = F('games_played') + 1
                     update_fields.append('games_played')
                 streak = 0
-                collected_flags = []
-                collected_names = []
+                collected = []
             else:
                 """
                 When a user submits the guess form normally (no JS), the browser sends a plain POST with no HX-Request header — so request.htmx is falsy and you follow the old PRG (Post/Redirect/Get) path, which prevents resubmission on refresh.
@@ -524,20 +527,20 @@ def quiz(request):
         else:
             game_over = True
             final_streak = streak
-            final_collected_flags = collected_flags[:]
+            final_collected_flags = [c['flag'] for c in collected]
 
             if is_authenticated:
                 if final_streak > user.high_score:
                     user.high_score = final_streak
                     update_fields.append('high_score')
+                collected_names = [c['name'] for c in collected]
                 if collected_names:
                     mastered = Country.objects.filter(name__in=collected_names)
                     user.mastered_flags.add(*mastered)
                 user.games_played = F('games_played') + 1
                 update_fields.append('games_played')
             streak = 0
-            collected_flags = []
-            collected_names = []
+            collected = []
             if not request.htmx:
                 messages.error(request, f"Noooo 😢 it was {truth_name}")
 
@@ -550,6 +553,7 @@ def quiz(request):
         pool = gm['filter'](get_countries())
         if not pool:
             return redirect('quiz')
+        collected_names = {c['name'] for c in collected}
         available = [c for c in pool if c['name'] not in collected_names]
         if not available:
             available = pool
@@ -557,8 +561,7 @@ def quiz(request):
         random_country = random.choice(available)
         request.session['quiz_country'] = random_country
         request.session['quiz_streak'] = streak
-        request.session['quiz_collected_flags'] = collected_flags
-        request.session['quiz_collected_names'] = collected_names
+        request.session['quiz_collected'] = collected
 
         # HTMX guess: return the active-game partial directly
         # no page flash, input focus is restored by htmx:afterSettle in base.html.
@@ -567,7 +570,7 @@ def quiz(request):
             return render(request, 'quiz_active.html', {
                 'random_country': random_country,
                 'streak': streak,
-                'collected_flags': collected_flags,
+                'collected': collected,
                 'game_over': game_over,
                 'game_won': game_won,
                 'final_streak': final_streak,
@@ -597,14 +600,15 @@ def change_gamemode(request):
     if request.method != 'POST':
         return redirect('quiz')
     for key in ['quiz_gamemode', 'quiz_country', 'quiz_streak',
-                'quiz_collected_flags', 'quiz_collected_names', 'quiz_result', 'quiz_pool_size']:
+                'quiz_collected', 'quiz_result', 'quiz_pool_size']:
         request.session.pop(key, None)
     return redirect('quiz')
 
 @login_required
 def leaderboard(request):
+    countries = get_countries()
     top_players = Vexillologist.objects.order_by('-high_score')[:10]
-    return render(request, 'leaderboard.html', {'top_players': top_players, 'current_user': request.user})
+    return render(request, 'leaderboard.html', {'top_players': top_players, 'current_user': request.user, 'total_count': len(countries)})
 
 @login_required
 def mastery(request):
