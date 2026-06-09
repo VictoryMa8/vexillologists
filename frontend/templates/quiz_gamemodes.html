@@ -271,6 +271,32 @@
         </form>
         {% endwith %}
 
+        <!-- Miscellaneous Challenge (playable) -->
+        {% with gp=gamemode_progress.miscellaneous %}
+        <form method="post" action="{% url 'quiz' %}" class="contents">
+            {% csrf_token %}
+            <input type="hidden" name="gamemode" value="miscellaneous">
+            <button type="submit"
+                class="card {% if gp.mastered == gp.total %}bg-warning/40{% else %}bg-base-200{% endif %} border-2 border-warning hover:shadow-lg hover:shadow-warning/25 hover:bg-warning/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
+                <div class="card-body gap-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-4xl text-success">🤔 {% if gp.mastered == gp.total %}✔︎{% endif %}</span>
+                        <span class="badge badge-success badge-sm font-semibold">Easy</span>
+                    </div>
+                    <h2 class="card-title text-xl">Miscellaneous Challenge</h2>
+                    <p class="text-sm text-base-content/60 leading-relaxed">
+                        Learn about a few interesting flags from history and around the world.
+                    </p>
+                    <div class="flex justify-between text-xs text-base-content/40 mt-1">
+                        <span>{{ gp.mastered }} / {{ gp.total }} mastered</span>
+                        <span>{% widthratio gp.mastered gp.total 100 %}%</span>
+                    </div>
+                    <progress class="progress progress-success w-full h-1.5" value="{{ gp.mastered }}" max="{{ gp.total }}"></progress>
+                </div>
+            </button>
+        </form>
+        {% endwith %}
+
         <!-- Speed Round (locked) -->
         <div class="card bg-base-200 border-2 border-base-300 opacity-45 cursor-not-allowed text-left">
             <div class="card-body gap-3">

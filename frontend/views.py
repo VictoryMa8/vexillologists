@@ -175,6 +175,10 @@ GAMEMODES = {
         'name': 'Subnational Entities',
         'filter': lambda countries: [c for c in countries if c['entry_type'] == 'Subnational Entity'],
     },
+    'miscellaneous': {
+        'name': 'Miscellaneous',
+        'filter': lambda countries: [c for c in countries if c['entry_type'] == 'Miscellaneous'],
+    },
 }
 
 def index(request):
