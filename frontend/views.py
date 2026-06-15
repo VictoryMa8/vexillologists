@@ -132,7 +132,44 @@ def get_countries():
     return result
 
 
+# --- Temporary 2026 FIFA World Cup celebration ---
+# The exact 48 nations that qualified for the 2026 World Cup, written as the
+# names/aliases used in our own database (lowercased) so the match is precise.
+# Two of them live under a different primary name in the DB and are matched via
+# their aliases: England -> "United Kingdom", New Zealand -> "Aotearoa".
+WORLD_CUP_2026_QUALIFIERS = {
+    # Hosts (CONCACAF)
+    'canada', 'mexico', 'united states',
+    # AFC
+    'australia', 'iraq', 'iran', 'japan', 'jordan', 'south korea',
+    'qatar', 'saudi arabia', 'uzbekistan',
+    # CAF
+    'algeria', 'cabo verde', 'democratic republic of the congo', "côte d'ivoire",
+    'egypt', 'ghana', 'morocco', 'senegal', 'south africa', 'tunisia',
+    # CONCACAF (non-host)
+    'curaçao', 'haiti', 'panama',
+    # CONMEBOL
+    'argentina', 'brazil', 'colombia', 'ecuador', 'paraguay', 'uruguay',
+    # OFC (England + New Zealand matched via alias below)
+    'new zealand',
+    # UEFA
+    'austria', 'belgium', 'bosnia and herzegovina', 'croatia', 'czechia',
+    'england', 'france', 'germany', 'netherlands', 'norway', 'portugal',
+    'scotland', 'spain', 'sweden', 'switzerland', 'türkiye',
+}
+
+def is_world_cup_qualifier(country):
+    """True if the country's name or any alias matches a 2026 World Cup qualifier."""
+    names = {(country.get('name') or '').lower()}
+    names |= {(alias or '').lower() for alias in country.get('aliases', [])}
+    return bool(names & WORLD_CUP_2026_QUALIFIERS)
+
+
 GAMEMODES = {
+    'world_cup_2026': {
+        'name': 'World Cup 2026',
+        'filter': lambda countries: [c for c in countries if is_world_cup_qualifier(c)],
+    },
     'world_tour': {
         'name': 'World Tour',
         # lambda is used to create an anonymous function that returns the countries list
@@ -223,9 +260,13 @@ def index(request):
         if (c.get('entry_type') or "").strip()
     })
 
+    # Temporary 2026 World Cup celebration: qualifier flags for the showcase
+    world_cup_flags = [c for c in countries if is_world_cup_qualifier(c)]
+
     return render(request, 'index.html', context={
         'countries': filtered_countries,
         'total_count': len(countries),
+        'world_cup_flags': world_cup_flags,
         'continents': continents,
         'entry_types': entry_types,
         'selected_query': selected_query,

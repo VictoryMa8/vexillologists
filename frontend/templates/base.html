@@ -28,6 +28,19 @@
 <body class="flex flex-col items-center min-h-screen" hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
 {% include 'nav.html' %}
 
+<!-- Temporary 2026 FIFA World Cup celebration banner -->
+<form method="post" action="{% url 'quiz' %}" class="w-full">
+    {% csrf_token %}
+    <input type="hidden" name="gamemode" value="world_cup_2026">
+    <button type="submit"
+        class="group w-full bg-gradient-to-l from-success via-warning to-success text-success-content font-['Alegreya'] p-2 shadow-md hover:brightness-140 transition cursor-pointer">
+        <span class="text-xl font-bold text-center">
+          The World Cup is here! Play the <span class="underline decoration-2 underline-offset-2">World Cup qualifiers</span> quiz ⚽🏆
+        </span>
+    </button>
+</form>
+
+
 <!-- Notification pop-ups with Django messages -->
 {% if messages %}
 <div id="toast-container" class="toast toast-top toast-center z-50">
