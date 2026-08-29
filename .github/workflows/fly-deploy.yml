@@ -41,7 +41,8 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: python manage.py check --deploy
-      - run: python manage.py test frontend
+      - run: python manage.py collectstatic --noinput --verbosity 0
+      - run: python manage.py test frontend --settings=backend.test_settings
 
   deploy:
     name: Deploy app
