@@ -3,9 +3,9 @@
 {% block title %}Sign Up - Vexillology Quiz{% endblock %}
 
 {% block content %}
-<main class="flex flex-col items-center justify-center p-8 gap-4">
+<main class="flex flex-col items-center justify-center px-4 py-8 gap-4 w-full">
     <h1 class="text-3xl font-bold">Sign Up</h1>
-    <form method="post" class="flex flex-col gap-4 w-9/10 md:w-3/4 bg-base-200 p-6 rounded-lg">
+    <form method="post" class="flex flex-col gap-4 w-full max-w-md bg-base-200 p-6 rounded-lg">
         {% csrf_token %}
         {% for field in form %}
             <label class="form-control w-full">
@@ -25,11 +25,11 @@
                 {% endfor %}
             </label>
         {% endfor %}
-        <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+        <div class="recaptcha-frame"><div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div></div>
         <button type="submit" class="btn btn-primary mt-4 w-full">Sign Up</button>
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     </form>
-    <p>Already have an account? <a href="{% url 'login' %}" class="link link-primary hover:text-primary-focus transition-colors">Log in</a></p>
+    <p>Already have an account? <a href="{% url 'login' %}" class="link link-primary hover:text-primary/70 transition-colors">Log in</a></p>
 </main>
 
 <script>

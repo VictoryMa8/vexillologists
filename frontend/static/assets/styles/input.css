@@ -69,3 +69,18 @@ a.country-card:active {
     animation: streak-appear 0.5s;
     animation-delay: 0.1s;
 }
+
+/* Keep Google's fixed-width reCAPTCHA widget inside the signup card on small phones. */
+.recaptcha-frame {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+@media (max-width: 359px) {
+    .recaptcha-frame .g-recaptcha {
+        width: 304px;
+        transform: scale(0.78);
+        transform-origin: top left;
+        margin-bottom: -17px;
+    }
+}

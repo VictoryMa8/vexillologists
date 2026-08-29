@@ -3,6 +3,7 @@ from django.utils.text import slugify
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login as auth_login, update_session_auth_hash
+from django.db import IntegrityError, transaction
 from django.db.models import F
 from django.core.cache import cache
 # Named django_settings to avoid conflict with settings.py (my view)
@@ -10,9 +11,15 @@ from django.conf import settings as django_settings
 from allauth.account.models import EmailAddress
 
 from .forms import LoginForm, VexillologistCreationForm, VexillologistChangeForm, UsernameChangeForm, PasswordChangeForm
+from .campaigns import world_cup_2026_campaign_active
 from .models import Country, Vexillologist
 import random
 import requests
+import hashlib
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_client_ip(request):
@@ -32,6 +39,23 @@ def get_client_ip(request):
         return xff.split(',')[-1].strip()
 
     return request.META.get('REMOTE_ADDR', 'unknown')
+
+
+def login_attempt_cache_key(request):
+    """Hash the client address before using it as a shared cache key."""
+    ip_digest = hashlib.sha256(get_client_ip(request).encode('utf-8')).hexdigest()
+    return f'login_attempts:{ip_digest}'
+
+
+def update_high_score(user, score):
+    """Raise a user's high score without allowing concurrent games to lower it."""
+    if not user.is_authenticated or score <= user.high_score:
+        return
+    updated = Vexillologist.objects.filter(pk=user.pk, high_score__lt=score).update(high_score=score)
+    if updated:
+        user.high_score = score
+    else:
+        user.refresh_from_db(fields=['high_score'])
 
 """
 The key used to store the country list in the cache
@@ -95,7 +119,7 @@ def get_countries():
     
     cache.get() returns None on a cache miss
     
-    On a hit it returns the previously stored list from RAM, no database round-trip
+    On a hit it returns the previously stored serialized list from the shared cache
     """
     cached = cache.get(COUNTRIES_CACHE_KEY)
     if cached is not None:
@@ -218,6 +242,12 @@ GAMEMODES = {
     },
 }
 
+
+def selectable_gamemodes():
+    if world_cup_2026_campaign_active():
+        return GAMEMODES
+    return {key: value for key, value in GAMEMODES.items() if key != 'world_cup_2026'}
+
 def index(request):
     countries = get_countries()
 
@@ -261,7 +291,11 @@ def index(request):
     })
 
     # Temporary 2026 World Cup celebration: qualifier flags for the showcase
-    world_cup_flags = [c for c in countries if is_world_cup_qualifier(c)]
+    world_cup_flags = (
+        [c for c in countries if is_world_cup_qualifier(c)]
+        if world_cup_2026_campaign_active()
+        else []
+    )
 
     return render(request, 'index.html', context={
         'countries': filtered_countries,
@@ -279,6 +313,7 @@ def index(request):
 def signup(request):
     # On the sign up page, get the form with post
     if request.method == 'POST':
+        form = VexillologistCreationForm(request.POST)
         token = request.POST.get('g-recaptcha-response', '')
         # Verify the CAPTCHA with Google -- timeout so a slow Google can't freeze the site
         captcha_ok = False
@@ -294,25 +329,36 @@ def signup(request):
         if not captcha_ok:
             messages.error(request, 'Please complete the CAPTCHA.')
             return render(request, 'signup.html', {
-                'form': VexillologistCreationForm(),
+                'form': form,
                 'recaptcha_site_key': django_settings.RECAPTCHA_SITE_KEY,
             })
 
         # If the CAPTCHA is successful, process the form
-        form = VexillologistCreationForm(request.POST)
         # If the form is valid, save the user and login the user
         if form.is_valid():
-            user = form.save()
-            auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            # EmailAddress is from allauth.account.models for storing email addresses for users
-            # create() creates a new email address record in the database
-            email_address = EmailAddress.objects.create(
-                user=user, email=user.email, primary=True, verified=False
-            )
-            # send_confirmation() generates the confirmation token and fires the email
-            # signup=True tells allauth to use the signup-specific email template
-            email_address.send_confirmation(request, signup=True)
-            return redirect('index')
+            try:
+                # Keep the user and allauth email records consistent if a
+                # concurrent signup claims the same email.
+                with transaction.atomic():
+                    user = form.save()
+                    email_address = EmailAddress.objects.create(
+                        user=user, email=user.email, primary=True, verified=False
+                    )
+            except IntegrityError:
+                form.add_error('email', 'An account with that email already exists.')
+            else:
+                auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                try:
+                    email_address.send_confirmation(request, signup=True)
+                except Exception:
+                    # Account creation succeeded; an email outage should not
+                    # turn that success into an ambiguous 500 response.
+                    logger.exception('Unable to send signup confirmation email')
+                    messages.warning(
+                        request,
+                        'Your account was created, but the confirmation email could not be sent. You can resend it from Settings.',
+                    )
+                return redirect('index')
     else:
         form = VexillologistCreationForm()
 
@@ -323,8 +369,7 @@ def signup(request):
 
 def login_view(request):
     if request.method == 'POST':
-        ip = get_client_ip(request)
-        cache_key = f'login_attempts_{ip}'
+        cache_key = login_attempt_cache_key(request)
         attempts = cache.get(cache_key, 0)
 
         if attempts >= 5:
@@ -338,7 +383,7 @@ def login_view(request):
             auth_login(request, form.user, backend='django.contrib.auth.backends.ModelBackend')
             return redirect('index')
         else:
-            # Set the cache key to the number of attempts + 1, and the timeout to 60 seconds
+            # DatabaseCache makes this counter shared by all workers/machines.
             cache.set(cache_key, attempts + 1, 60)
     else:
         form = LoginForm()
@@ -454,14 +499,26 @@ def quiz(request):
                     'mastered': len({c['name'] for c in gm['filter'](countries)} & mastered_names),
                     'total': len(gm['filter'](countries)),
                 }
-                for key, gm in GAMEMODES.items()
+                for key, gm in selectable_gamemodes().items()
             }
             return render(request, 'quiz.html', context={
                 'show_gamemode_select': True,
                 'gamemode_progress': gamemode_progress,
             })
 
-        # Fresh page load with a gamemode set - reset all game state
+        # Resume an in-progress game. A normal refresh must not erase progress
+        # or let an authenticated player avoid recording the eventual result.
+        existing_country = request.session.get('quiz_country')
+        if existing_country:
+            return render(request, 'quiz.html', context={
+                'random_country': existing_country,
+                'streak': request.session.get('quiz_streak', 0),
+                'collected': request.session.get('quiz_collected', []),
+                'gamemode_name': gamemode_name,
+                'pool_size': request.session.get('quiz_pool_size', 0),
+            })
+
+        # First page load after selecting a game mode.
         gm = GAMEMODES.get(gamemode_key, GAMEMODES['world_tour'])
         pool = gm['filter'](get_countries())
         random_country = random.choice(pool) if pool else None
@@ -482,7 +539,9 @@ def quiz(request):
         # Handle gamemode selection (submitted from the gamemode picker screen)
         gamemode = request.POST.get('gamemode')
         if gamemode:
-            gm = GAMEMODES.get(gamemode, GAMEMODES['world_tour'])
+            available_gamemodes = selectable_gamemodes()
+            gamemode = gamemode if gamemode in available_gamemodes else 'world_tour'
+            gm = available_gamemodes[gamemode]
             pool = gm['filter'](get_countries())
             request.session['quiz_gamemode'] = gamemode
             request.session['quiz_pool_size'] = len(pool)
@@ -542,15 +601,15 @@ def quiz(request):
                 'fact': truth.get('fact') or '',
             }]
 
+            if is_authenticated:
+                update_high_score(user, streak)
+
             # Win condition: player has guessed every country in the pool
             if pool_size > 0 and len(collected) >= pool_size:
                 game_won = True
                 final_streak = streak
                 final_collected_flags = [c['flag'] for c in collected]
                 if is_authenticated:
-                    if final_streak > user.high_score:
-                        user.high_score = final_streak
-                        update_fields.append('high_score')
                     collected_names = [c['name'] for c in collected]
                     if collected_names:
                         mastered = Country.objects.filter(name__in=collected_names)
@@ -575,9 +634,7 @@ def quiz(request):
             final_collected_flags = [c['flag'] for c in collected]
 
             if is_authenticated:
-                if final_streak > user.high_score:
-                    user.high_score = final_streak
-                    update_fields.append('high_score')
+                update_high_score(user, final_streak)
                 collected_names = [c['name'] for c in collected]
                 if collected_names:
                     mastered = Country.objects.filter(name__in=collected_names)

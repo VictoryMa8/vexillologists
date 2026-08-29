@@ -38,7 +38,7 @@ No JavaScript framework. The live search and autocomplete are powered by HTMX, a
 
 **Secure POST/GET pattern**: after every guess, the server redirects to a GET instead of rendering directly from the POST. This means refreshing after a wrong guess can't accidentally re-submit the form.
 
-**In-memory caching**: the full country list is cached in RAM on first request and reused across all views for 1 hour, cutting database queries greatly. A Django signal (`post_save`/`post_delete` on the `Country` model) automatically clears the cache whenever an admin edits a country, so stale data is never served.
+**Shared caching**: the full country list is cached in PostgreSQL on first request and reused across all views for 1 hour, cutting repeated country queries across every web worker. A Django signal (`post_save`/`post_delete` on the `Country` model) automatically clears the shared cache whenever an admin edits a country.
 
 **No repeated flags**: already-collected flags are excluded from the random pool for the rest of that game, so your streak always shows you something new.
 

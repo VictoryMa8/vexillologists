@@ -27,5 +27,5 @@ console_command = '/code/manage.py shell'
   size = 'shared-cpu-1x'
 
 [[statics]]
-  guest_path = '/code/static'
+  guest_path = '/code/staticfiles'
   url_prefix = '/static/'

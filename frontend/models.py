@@ -1,6 +1,8 @@
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import ArrayField
+from django.db.models import Q
+from django.db.models.functions import Lower
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.core.cache import cache
@@ -16,6 +18,17 @@ class Vexillologist(AbstractUser):
 
     def __str__(self):
         return self.username
+
+    class Meta:
+        verbose_name = 'user'
+        verbose_name_plural = 'users'
+        constraints = [
+            models.UniqueConstraint(
+                Lower('email'),
+                condition=~Q(email=''),
+                name='frontend_user_email_ci_unique',
+            ),
+        ]
 
 class Country(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -50,4 +63,6 @@ Without this, an admin edit would be invisible until the 1-hour TTL expires
 @receiver(post_save, sender=Country)
 @receiver(post_delete, sender=Country)
 def invalidate_countries_cache(sender, **kwargs):
-    cache.delete('countries:v2')
+    # Delete after the write commits so another worker cannot refill the cache
+    # with pre-commit data in the gap between the signal and the commit.
+    transaction.on_commit(lambda: cache.delete('countries:v2'))

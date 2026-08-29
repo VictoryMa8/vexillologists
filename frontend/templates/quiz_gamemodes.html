@@ -12,6 +12,7 @@
     <div class="grid grid-cols-2 md:grid-cols-3 gap-2 w-full">
 
         <!-- World Cup 2026 (temporary, playable) -->
+        {% if world_cup_2026_campaign_active %}
         {% with gp=gamemode_progress.world_cup_2026 %}
         <form method="post" action="{% url 'quiz' %}" class="contents">
             {% csrf_token %}
@@ -36,6 +37,7 @@
             </button>
         </form>
         {% endwith %}
+        {% endif %}
 
         <!-- World Tour (playable) -->
         {% with gp=gamemode_progress.world_tour %}

@@ -97,6 +97,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'frontend.context_processors.campaigns',
             ],
         },
     },
@@ -128,7 +129,11 @@ DATABASES = {
 # Caching
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        # DatabaseCache is shared by every Gunicorn worker and Fly machine, so
+        # rate limits and country-cache invalidations have one consistent view.
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache',
+        'TIMEOUT': 300,
     }
 }
 

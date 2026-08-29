@@ -15,12 +15,15 @@ that would break the site for all users if deployed broken:
   
 """
 
+from unittest.mock import patch
+
 from django.test import TestCase, Client
 from django.core.cache import cache
+from django.db import IntegrityError, transaction
 from django.urls import reverse
 
 from .models import Country, Vexillologist
-from .forms import LoginForm, UsernameChangeForm
+from .forms import LoginForm, UsernameChangeForm, VexillologistCreationForm
 from .views import filter_countries, COUNTRIES_CACHE_KEY
 
 
@@ -101,6 +104,11 @@ class VexillologistModelTest(TestCase):
         user.mastered_flags.add(country)
         self.assertIn(country, user.mastered_flags.all())
 
+    def test_email_is_unique_case_insensitively_in_database(self):
+        make_user(email="owner@example.com")
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            make_user(username="second-user", email="OWNER@example.com")
+
 
 # Cache / Signal Tests
 class CountriesCacheTest(TestCase):
@@ -129,7 +137,8 @@ class CountriesCacheTest(TestCase):
         self.assertIsNotNone(cache.get(COUNTRIES_CACHE_KEY))
 
         c.name = "Signalia Renamed"
-        c.save()  # post_save signal fires here
+        with self.captureOnCommitCallbacks(execute=True):
+            c.save()  # post_save signal schedules invalidation after commit
 
         self.assertIsNone(cache.get(COUNTRIES_CACHE_KEY))
 
@@ -138,7 +147,8 @@ class CountriesCacheTest(TestCase):
         from .views import get_countries
         c = make_country(name="Deletia")
         get_countries()
-        c.delete()  # post_delete signal fires here
+        with self.captureOnCommitCallbacks(execute=True):
+            c.delete()  # post_delete signal schedules invalidation after commit
         self.assertIsNone(cache.get(COUNTRIES_CACHE_KEY))
 
 
@@ -222,7 +232,7 @@ class PublicViewsTest(TestCase):
 
     def test_leaderboard_page(self):
         response = self.client.get(reverse("leaderboard"))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
 
     def test_about_page(self):
         response = self.client.get(reverse("about"))
@@ -265,8 +275,8 @@ class AuthGateTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("login", response["Location"])
 
-    def test_quiz_requires_login(self):
-        self._assert_redirects_to_login(reverse("quiz"))
+    def test_leaderboard_requires_login(self):
+        self._assert_redirects_to_login(reverse("leaderboard"))
 
     def test_mastery_requires_login(self):
         self._assert_redirects_to_login(reverse("mastery"))
@@ -274,12 +284,14 @@ class AuthGateTest(TestCase):
     def test_settings_requires_login(self):
         self._assert_redirects_to_login(reverse("settings"))
 
-    def test_country_detail_requires_login(self):
-        # country() takes a slug — any slug triggers the auth gate
-        self._assert_redirects_to_login(reverse("country", args=["testland"]))
+    def test_quiz_is_public(self):
+        self.assertEqual(self.client.get(reverse("quiz")).status_code, 200)
 
-    def test_search_guesses_requires_login(self):
-        self._assert_redirects_to_login(reverse("search_guesses"))
+    def test_country_detail_is_public(self):
+        self.assertEqual(self.client.get(reverse("country", args=["testland"])).status_code, 302)
+
+    def test_search_guesses_is_public(self):
+        self.assertEqual(self.client.get(reverse("search_guesses")).status_code, 200)
 
 
 # Login Form Tests
@@ -311,6 +323,41 @@ class LoginFormTest(TestCase):
     def test_empty_fields_invalid(self):
         form = LoginForm(data={"email": "", "password": ""})
         self.assertFalse(form.is_valid())
+
+    def test_inactive_user_cannot_login(self):
+        self.user.is_active = False
+        self.user.save(update_fields=["is_active"])
+        form = LoginForm(data={"email": "login@example.com", "password": "correct_pass!"})
+        self.assertFalse(form.is_valid())
+
+
+class SignupFormTest(TestCase):
+    def test_email_is_unique_case_insensitively(self):
+        make_user(email="used@example.com")
+        form = VexillologistCreationForm(data={
+            "username": "another-user",
+            "email": "USED@example.com",
+            "password1": "strong-test-password!23",
+            "password2": "strong-test-password!23",
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn("email", form.errors)
+
+
+class SignupViewTest(TestCase):
+    @patch("frontend.views.EmailAddress.send_confirmation", side_effect=RuntimeError("SMTP unavailable"))
+    @patch("frontend.views.requests.post")
+    def test_email_failure_does_not_rollback_created_account(self, recaptcha_post, send_confirmation):
+        recaptcha_post.return_value.json.return_value = {"success": True}
+        response = self.client.post(reverse("signup"), {
+            "username": "resilient-user",
+            "email": "resilient@example.com",
+            "password1": "strong-test-password!23",
+            "password2": "strong-test-password!23",
+            "g-recaptcha-response": "test-token",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Vexillologist.objects.filter(email="resilient@example.com").exists())
 
 
 # Username Uniqueness Form Tests
@@ -450,13 +497,20 @@ class QuizTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("show_gamemode_select", response.context)
 
+    def test_refresh_preserves_active_game(self):
+        self._set_session(extra={"quiz_streak": 1})
+        response = self.client.get(reverse("quiz"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.session["quiz_streak"], 1)
+        self.assertEqual(response.context["streak"], 1)
+
     def test_change_gamemode_clears_session(self):
         """
         change_gamemode() must wipe all quiz keys so the player starts fresh.
         Leftover keys from a previous game would corrupt the new game's state.
         """
         self._set_session()
-        self.client.get(reverse("change_gamemode"))
+        self.client.post(reverse("change_gamemode"))
 
         session = self.client.session
         for key in ["quiz_gamemode", "quiz_country", "quiz_streak", "quiz_collected"]:

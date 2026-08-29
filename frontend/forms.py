@@ -1,6 +1,7 @@
 import os
 from django import forms
 # Using Django's built-in UserCreationForm and PasswordChangeForm to inherit from
+from django.contrib.auth import authenticate
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm as DjangoPasswordChangeForm
 from .models import Vexillologist
 
@@ -33,7 +34,15 @@ class VexillologistCreationForm(UserCreationForm):
 
     def clean_username(self):
         username = self.cleaned_data.get("username")
+        if Vexillologist.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("That username is already taken.")
         return validate_username(username)
+
+    def clean_email(self):
+        email = Vexillologist.objects.normalize_email(self.cleaned_data.get("email", "")).strip()
+        if Vexillologist.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("An account with that email already exists.")
+        return email
 
 class LoginForm(forms.Form):
     email = forms.EmailField()
@@ -55,10 +64,14 @@ class LoginForm(forms.Form):
         if not email or not password:
             return cleaned_data
 
-        user = Vexillologist.objects.filter(email__iexact=email).first()
+        user_record = Vexillologist.objects.filter(email__iexact=email).first()
+        user = None
+        if user_record:
+            # authenticate() applies backend policy as well as checking the password,
+            # including Django's protection against inactive accounts.
+            user = authenticate(username=user_record.get_username(), password=password)
 
-        # check_password() hashes and compares it to stored encrypted passwords
-        if not user or not user.check_password(password): 
+        if not user:
             raise forms.ValidationError("Invalid email or password.")
 
         self.user = user
