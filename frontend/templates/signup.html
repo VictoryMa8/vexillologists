@@ -7,24 +7,7 @@
     <h1 class="text-3xl font-bold">Sign Up</h1>
     <form method="post" class="flex flex-col gap-4 w-full max-w-md bg-base-200 p-6 rounded-lg">
         {% csrf_token %}
-        {% for field in form %}
-            <label class="form-control w-full">
-                <div class="label">
-                    <span class="label-text font-medium">{{ field.label }}</span>
-                </div>
-                {{ field }}
-                {% if field.help_text %}
-                    <div class="label pb-0 justify-start">
-                        <div class="label-text-alt text-base-content whitespace-normal break-words text-left">{{ field.help_text }}</div>
-                    </div>
-                {% endif %}
-                {% for error in field.errors %}
-                    <div class="label">
-                        <span class="label-text-alt text-error font-medium">{{ error }}</span>
-                    </div>
-                {% endfor %}
-            </label>
-        {% endfor %}
+        {% include "components/form_fields.html" with form=form %}
         <div class="recaptcha-frame"><div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div></div>
         <button type="submit" class="btn btn-primary mt-4 w-full">Sign Up</button>
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
@@ -32,14 +15,4 @@
     <p>Already have an account? <a href="{% url 'login' %}" class="link link-primary hover:text-primary/70 transition-colors">Log in</a></p>
 </main>
 
-<script>
-    // When DOM loads, give inputs DaisyUI classes to all form inputs (theme controller avoided)
-    // Doing this otherwise we'd have to do some freaky Django stuff with widgets
-    document.addEventListener("DOMContentLoaded", function() {
-        const inputs = document.querySelectorAll("form input:not([type='hidden'])");
-        inputs.forEach(input => {
-            input.classList.add("input", "input-bordered", "w-full", "focus:outline-primary");
-        });
-    });
-</script>
 {% endblock %}

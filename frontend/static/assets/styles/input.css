@@ -1,36 +1,317 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-/*  Satisfying button press (applies to all DaisyUI .btn elements) */
-h1 {
+/* Shared visual language: controls are compact-soft, surfaces are generously rounded. */
+html[data-theme] {
+    --ui-control-radius: 0.8rem;
+    --ui-panel-radius: 1.2rem;
+    --radius-selector: 0.8rem;
+    --radius-field: 0.8rem;
+    --radius-box: 1.2rem;
+}
+
+body {
+    background-color: var(--color-base-100);
+    background-image:
+        radial-gradient(circle at 8% 6%, color-mix(in oklab, var(--color-success) 7%, transparent) 0, transparent 24rem),
+        radial-gradient(circle at 92% 28%, color-mix(in oklab, var(--color-primary) 6%, transparent) 0, transparent 22rem);
+    background-repeat: no-repeat;
+}
+
+h1, h2, h3 {
     font-family: 'Alegreya', serif;
 }
 
-.btn {
-    transition: transform 100ms;
-}
-.btn:hover {
-    filter: brightness(1.3);
-    transform: translateY(-2px);
-}
-.btn:active {
-    transform: scale(0.8);
-    filter: brightness(0.8);
-    transition-duration: 100ms;
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl {
+    border-radius: var(--ui-panel-radius);
 }
 
-/* Game mode card: bigger hover lift + satisfying press */
-button.card {
-    transition: transform 150ms,
-                box-shadow 150ms ease,
-                background-color 150ms ease;
+.btn,
+.badge,
+.input,
+.select,
+.textarea,
+.alert {
+    border-radius: var(--ui-control-radius) !important;
 }
-button.card:hover {
-    transform: translateY(-8px);
+
+.card,
+.modal-box,
+.stats,
+.dropdown-content {
+    border-radius: var(--ui-panel-radius);
 }
-button.card:active {
-    transform: scale(0.8);
-    transition-duration: 100ms;
+
+.btn:focus-visible,
+.input:focus-visible,
+.select:focus-visible,
+summary:focus-visible,
+a:focus-visible {
+    outline: 3px solid color-mix(in oklab, var(--color-success) 70%, white);
+    outline-offset: 3px;
+}
+
+/* Satisfying without making controls jump or shrink dramatically. */
+.btn {
+    transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+}
+.btn:hover:not(:disabled) {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+.btn:active:not(:disabled) {
+    transform: scale(0.96);
+    filter: brightness(0.94);
+}
+
+/* Game mode picker */
+.mode-picker-hero {
+    isolation: isolate;
+    border: 1px solid color-mix(in oklab, var(--color-success) 55%, var(--color-base-300));
+    border-radius: calc(var(--ui-panel-radius) + 0.35rem);
+    background: color-mix(in oklab, var(--color-success) 24%, var(--color-base-200));
+    box-shadow: 0 10px 24px color-mix(in oklab, var(--color-base-content) 10%, transparent);
+}
+
+.mode-hero-panel {
+    border: 1px solid var(--color-base-300);
+    border-radius: var(--ui-panel-radius);
+    background: var(--color-base-100);
+    box-shadow: 0 8px 20px color-mix(in oklab, var(--color-base-content) 8%, transparent);
+}
+
+.mode-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--color-success);
+}
+
+.mode-picker-title {
+    color: var(--color-success);
+}
+
+.mode-score-chip,
+.mode-rule-label {
+    border: 1px solid color-mix(in oklab, var(--color-success) 35%, var(--color-base-300));
+    border-radius: var(--ui-control-radius);
+    background: var(--color-base-100);
+    padding: 0.35rem 0.65rem;
+    font-size: 0.78rem;
+}
+
+.mode-section-summary {
+    --section-color: var(--color-success);
+    --section-content: var(--color-base-content);
+    border: 1px solid color-mix(in oklab, var(--section-color) 60%, var(--color-base-300));
+    border-radius: var(--ui-panel-radius);
+    background: color-mix(in oklab, var(--section-color) 30%, var(--color-base-200));
+    color: var(--section-content);
+    box-shadow: 0 5px 14px color-mix(in oklab, var(--color-base-content) 6%, transparent);
+    transition: border-color 150ms ease, filter 150ms ease, transform 150ms ease;
+}
+
+.mode-section[data-section="regions"] .mode-section-summary {
+    --section-color: var(--color-info);
+}
+
+.mode-section[data-section="collections"] .mode-section-summary {
+    --section-color: var(--color-warning);
+}
+
+.mode-section-summary:hover {
+    border-color: var(--section-color);
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+}
+
+.mode-section-icon {
+    width: 3rem;
+    height: 3rem;
+    display: grid;
+    place-items: center;
+    flex: none;
+    border-radius: 1rem;
+    background: color-mix(in oklab, var(--section-content) 12%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--section-content) 25%, transparent);
+    font-size: 1.7rem;
+}
+
+.mode-section-subtitle {
+    color: color-mix(in oklab, var(--section-content) 72%, transparent);
+}
+
+.mode-section-count {
+    display: none;
+    padding: 0.3rem 0.65rem;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--section-content) 13%, transparent);
+    color: var(--section-content);
+    font-size: 0.72rem;
+    font-weight: 800;
+
+    @media (min-width: 36rem) {
+        display: inline-flex;
+    }
+}
+
+.mode-chevron {
+    width: 2.1rem;
+    height: 2.1rem;
+    display: grid;
+    place-items: center;
+    border-radius: var(--ui-control-radius);
+    background: color-mix(in oklab, var(--section-content) 13%, transparent);
+    color: var(--section-content);
+}
+
+.game-mode-card {
+    --mode-color: var(--color-success);
+    --mode-content: var(--color-base-content);
+    position: relative;
+    overflow: hidden;
+    min-height: 16rem;
+    border: 1px solid color-mix(in oklab, var(--mode-color) 62%, var(--color-base-300));
+    background: color-mix(in oklab, var(--mode-color) 28%, var(--color-base-200));
+    color: var(--mode-content);
+    box-shadow: 0 6px 16px color-mix(in oklab, var(--color-base-content) 10%, transparent);
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.game-mode-card[data-tone="amber"] {
+    --mode-color: var(--color-warning);
+}
+
+.game-mode-card[data-tone="coral"] {
+    --mode-color: var(--color-error);
+}
+
+.game-mode-card[data-tone="violet"] {
+    --mode-color: var(--color-secondary);
+}
+
+.game-mode-card[data-tone="sky"] {
+    --mode-color: var(--color-info);
+}
+
+.game-mode-card[data-tone="rose"] {
+    --mode-color: var(--color-primary);
+}
+
+.game-mode-card[data-tone="teal"] {
+    --mode-color: var(--color-accent);
+}
+
+.game-mode-card:hover:not(:disabled) {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px color-mix(in oklab, var(--color-base-content) 18%, transparent);
+}
+
+.game-mode-card:active:not(:disabled) {
+    transform: translateY(-1px) scale(0.985);
+}
+
+.game-mode-card:disabled {
+    opacity: 0.62;
+    filter: saturate(0.7);
+}
+
+.mode-icon-shell {
+    width: 3.8rem;
+    height: 3.8rem;
+    display: grid;
+    place-items: center;
+    border-radius: var(--ui-panel-radius);
+    border: 1px solid color-mix(in oklab, var(--mode-content) 25%, transparent);
+    background: color-mix(in oklab, var(--mode-content) 12%, transparent);
+    font-size: 2.15rem;
+    box-shadow: 0 4px 10px color-mix(in oklab, var(--color-base-content) 7%, transparent);
+    transition: transform 180ms ease;
+}
+
+.game-mode-card:hover:not(:disabled) .mode-icon-shell {
+    transform: scale(1.05);
+}
+
+.mode-badge {
+    min-height: 1.65rem;
+    height: auto;
+    padding: 0.25rem 0.55rem;
+    border-color: color-mix(in oklab, var(--mode-content) 25%, transparent);
+    background: color-mix(in oklab, var(--mode-content) 12%, transparent);
+    color: var(--mode-content);
+    font-size: 0.7rem;
+    font-weight: 750;
+}
+
+.mode-card-title {
+    color: var(--mode-content);
+}
+
+.mode-card-description,
+.mode-card-meta {
+    color: color-mix(in oklab, var(--mode-content) 78%, transparent);
+}
+
+.mode-card-meta strong {
+    color: var(--mode-content);
+}
+
+.mode-card-footer {
+    border-top: 1px solid color-mix(in oklab, var(--mode-content) 24%, transparent);
+}
+
+.game-mode-card .mode-rule-label {
+    border-color: color-mix(in oklab, var(--mode-content) 28%, transparent);
+    background: color-mix(in oklab, var(--mode-content) 10%, transparent);
+    color: var(--mode-content);
+}
+
+/* Leaderboard and mastery controls */
+.mode-filter-shell,
+.mastery-review-callout {
+    border: 1px solid color-mix(in oklab, var(--color-primary) 30%, var(--color-base-300));
+    border-radius: var(--ui-panel-radius);
+    background: linear-gradient(135deg,
+        color-mix(in oklab, var(--color-primary) 10%, var(--color-base-200)),
+        var(--color-base-200));
+    padding: 0.8rem;
+    box-shadow: 0 8px 24px color-mix(in oklab, var(--color-base-content) 7%, transparent);
+}
+
+.mode-filter-select {
+    border: 1px solid color-mix(in oklab, var(--color-primary) 42%, var(--color-base-300));
+    background-color: var(--color-base-100);
+    font-weight: 650;
+}
+
+.mastery-filter-bar {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.3rem;
+    border: 1px solid var(--color-base-300);
+    border-radius: var(--ui-panel-radius);
+    background: var(--color-base-200);
+}
+
+.mastery-entry {
+    padding: 0.45rem;
+    border: 1px solid transparent;
+    border-radius: var(--ui-panel-radius);
+    transition: background-color 140ms ease, border-color 140ms ease, transform 140ms ease;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 9rem;
+}
+
+.mastery-entry:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-base-300);
+    background: color-mix(in oklab, var(--color-base-200) 72%, transparent);
 }
 
 /* Country list cards  */
@@ -38,13 +319,15 @@ a.country-card {
     transition: transform 150ms,
                 box-shadow 150ms ease,
                 background-color 200ms ease;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 4.75rem;
 }
 a.country-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.2);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 24px color-mix(in oklab, var(--color-base-content) 10%, transparent);
 }
 a.country-card:active {
-    transform: scale(0.8);
+    transform: scale(0.98);
     transition-duration: 100ms;
 }
 
@@ -68,6 +351,22 @@ a.country-card:active {
 .streak-appear {
     animation: streak-appear 0.5s;
     animation-delay: 0.1s;
+}
+
+/* HTMX disables quiz controls while a guess is in flight. */
+.htmx-request.btn,
+.htmx-request .btn {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 
 /* Keep Google's fixed-width reCAPTCHA widget inside the signup card on small phones. */

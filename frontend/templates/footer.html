@@ -6,7 +6,7 @@
             height="60"
             {% load static %}
             class="fill-current" src="{% static 'assets/images/default_pfp.png' %}">
-          <p>Vexillologists.com  <span class="text-success text-3xl">1.2.5</span></p>
+          <p>Vexillologists.com  <span class="text-success text-3xl">1.3.0</span></p>
           <p>Made with ❤️ from Minnesota</p>
           <p>Flag images via Wikimedia Commons & Flagpedia 🌏</p>
         </aside>
@@ -20,27 +20,4 @@
           <a href="{% url 'release_notes' %}" class="footer-title hover:cursor-pointer">Release Notes</a>
         </nav>
     </footer>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Get theme contorller and current theme
-            const themeController = document.getElementById('theme-controller');
-            const currentTheme = document.documentElement.getAttribute('data-theme')
-
-            // Controller is checked if the current theme light
-            themeController.checked = currentTheme === 'light';
-
-            // If controller is clicked...
-            themeController.addEventListener('change', (event) => {
-                // If controller is checked, set theme to light
-                if (event.target.checked) {
-                    document.documentElement.setAttribute('data-theme', 'light');
-                    localStorage.setItem('theme', 'light');
-                    // If controller is not checked, set theme to dark
-                } else {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                    localStorage.setItem('theme', 'dark');
-                }
-            })
-        });
-    </script>
 </div>

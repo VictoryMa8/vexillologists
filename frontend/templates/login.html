@@ -11,19 +11,7 @@
         {% for error in form.non_field_errors %}
             <div class="alert alert-error text-sm">{{ error }}</div>
         {% endfor %}
-        {% for field in form %}
-            <label class="form-control w-full">
-                <div class="label">
-                    <span class="label-text font-medium">{{ field.label }}</span>
-                </div>
-                {{ field }}
-                {% for error in field.errors %}
-                    <div class="label">
-                        <span class="label-text-alt text-error font-medium">{{ error }}</span>
-                    </div>
-                {% endfor %}
-            </label>
-        {% endfor %}
+        {% include "components/form_fields.html" with form=form %}
         <button type="submit" class="btn btn-primary mt-4 w-full">Log In</button>
     </form>
     <div class="divider">OR</div>
@@ -39,14 +27,4 @@
     <p>Don't have an account? <a href="{% url 'signup' %}" class="link link-primary hover:text-primary/70 transition-colors">Sign up</a></p>
 </main>
 
-<script>
-    // When DOM loads, give inputs DaisyUI classes to all form inputs (theme controller avoided)
-    // Doing this otherwise we'd have to do some freaky Django stuff with widgets
-    document.addEventListener("DOMContentLoaded", function() {
-        const inputs = document.querySelectorAll("form input:not([type='hidden'])");
-        inputs.forEach(input => {
-            input.classList.add("input", "input-bordered", "w-full", "focus:outline-primary");
-        });
-    });
-</script>
 {% endblock %}

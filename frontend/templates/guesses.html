@@ -1,16 +1,9 @@
 {% if countries %}
 <div class="rounded-xl overflow-hidden shadow-2xl border border-success/30 max-h-72 overflow-y-auto">
     {% for country in countries %}
-    <!-- last:border-b-0 is a Tailwind pseudo-class that removes the bottom border from the last item in the list -->
-
-    <!-- example: data-name="Côte d&#x27;Ivoire"
-    onclick sends this element's dataname attribute to the sendText function 
-    browser automatically decodes &#x27; to ' before passing it to sendText
-    -->
         <button
             type="button"
-            data-name="{{ country.name }}"
-            onclick="sendText(this.dataset.name)"
+            data-guess="{{ country.name }}"
             class="w-full text-left px-4 py-2 text-base bg-base-200 hover:bg-success hover:text-success-content transition duration-150 ease-in-out border-b border-success/20 last:border-b-0 cursor-pointer">
             {{ country.name }}
         </button>

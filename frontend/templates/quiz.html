@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 
@@ -8,4 +9,8 @@
     {% include 'quiz_active.html' %}
 {% endif %}
 
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'assets/scripts/quiz.js' %}" defer></script>
 {% endblock %}

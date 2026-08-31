@@ -1,6 +1,7 @@
 from django.contrib import admin
-from .models import Country, Vexillologist
+from .models import Country, FlagProgress, GameResult, Vexillologist
 
-# Register your models here.
 admin.site.register(Country)
 admin.site.register(Vexillologist)
+admin.site.register(FlagProgress)
+admin.site.register(GameResult)

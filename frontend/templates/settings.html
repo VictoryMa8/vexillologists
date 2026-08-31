@@ -10,7 +10,6 @@
         <p>Username: {{ user.username }}</p>
         <p class="font-bold">High Score: {{ user.high_score }}</p>
         <p class="font-bold">Games Played: {{ user.games_played }}</p>
-        <!-- If the email is verified, display a checkmark, otherwise, display a button to resend the confirmation email -->
         {% if email_verified %}
         <div class="flex items-center justify-center gap-2 font-semibold">
             Email Confirmed
@@ -21,91 +20,37 @@
             <button type="submit" class="btn btn-warning w-full mt-2">Resend Confirmation Email</button>
         </form>
         {% endif %}
-        <button class="btn btn-error w-full" onclick="delete_modal.showModal()">Delete Account</button>
+        <button type="button" class="btn btn-error w-full" data-open-dialog="delete_modal">Delete Account</button>
     </div>
 
-    <!-- Username form -->
     <div class="w-full bg-base-300 p-6 rounded-lg flex flex-col gap-4">
         <h2 class="text-xl font-bold border-b border-base-content/20 pb-2">Change Username</h2>
         <form method="post" class="flex flex-col gap-4">
             {% csrf_token %}
             <input type="hidden" name="form_type" value="username">
-            {% for field in username_form %}
-                <label class="form-control w-full">
-                    <div class="label">
-                        <span class="label-text font-medium">{{ field.label }}</span>
-                    </div>
-                    {{ field }}
-                    {% if field.help_text %}
-                        <div class="label pb-0 justify-start">
-                            <div class="label-text-alt text-base-content whitespace-normal break-words text-left">{{ field.help_text }}</div>
-                        </div>
-                    {% endif %}
-                    {% for error in field.errors %}
-                        <div class="label">
-                            <span class="label-text-alt text-error font-medium">{{ error }}</span>
-                        </div>
-                    {% endfor %}
-                </label>
-            {% endfor %}
+            {% include "components/form_fields.html" with form=username_form %}
             <button type="submit" class="btn btn-success w-full">Save Username</button>
         </form>
     </div>
 
-    <!-- Password form -->
     {% if user.has_usable_password %}
     <div class="w-full bg-base-300 p-6 rounded-lg flex flex-col gap-4">
         <h2 class="text-xl font-bold border-b border-base-content/20 pb-2">Change Password</h2>
         <form method="post" class="flex flex-col gap-4">
             {% csrf_token %}
             <input type="hidden" name="form_type" value="password">
-            {% for field in password_form %}
-                <label class="form-control w-full">
-                    <div class="label">
-                        <span class="label-text font-medium">{{ field.label }}</span>
-                    </div>
-                    {{ field }}
-                    {% if field.help_text %}
-                        <div class="label pb-0 justify-start">
-                            <div class="label-text-alt text-base-content whitespace-normal break-words text-left">{{ field.help_text }}</div>
-                        </div>
-                    {% endif %}
-                    {% for error in field.errors %}
-                        <div class="label">
-                            <span class="label-text-alt text-error font-medium">{{ error }}</span>
-                        </div>
-                    {% endfor %}
-                </label>
-            {% endfor %}
+            {% include "components/form_fields.html" with form=password_form %}
             <button type="submit" class="btn btn-success w-full">Save Password</button>
         </form>
     </div>
     {% endif %}
 
-    <!-- Profile form -->
     <div class="w-full bg-base-300 p-6 rounded-lg flex flex-col gap-4">
         <h2 class="text-xl font-bold border-b border-base-content/20 pb-2">Profile</h2>
         <form method="post" class="flex flex-col gap-4">
             {% csrf_token %}
             <input type="hidden" name="form_type" value="profile">
-            {% for field in form %}
-                <label class="form-control w-full">
-                    <div class="label">
-                        <span class="label-text font-medium">{{ field.label }}</span>
-                    </div>
-                    {{ field }}
-                    {% if field.help_text %}
-                        <div class="label pb-0 justify-start">
-                            <div class="label-text-alt text-base-content whitespace-normal break-words text-left">{{ field.help_text }}</div>
-                        </div>
-                    {% endif %}
-                    {% for error in field.errors %}
-                        <div class="label">
-                            <span class="label-text-alt text-error font-medium">{{ error }}</span>
-                        </div>
-                    {% endfor %}
-                </label>
-            {% endfor %}
+            {% include "components/form_fields.html" with form=profile_form %}
             <button type="submit" class="btn btn-success w-full">Save Profile</button>
         </form>
     </div>
@@ -127,13 +72,4 @@
     </div>
 </dialog>
 
-<script>
-    // When DOM loads, give inputs DaisyUI classes to all form inputs
-    document.addEventListener("DOMContentLoaded", function() {
-        const inputs = document.querySelectorAll("form input:not([type='hidden'])");
-        inputs.forEach(input => {
-            input.classList.add("input", "input-bordered", "w-full", "focus:outline-success");
-        });
-    });
-</script>
 {% endblock %}

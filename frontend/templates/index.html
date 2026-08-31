@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %} Home {% endblock %}
 
@@ -6,7 +7,6 @@
 
 <div class="hero min-h-[50vh] mt-4">
   <div class="hero-content flex-col lg:flex-row-reverse">
-    {% load static %}
     <img class="mt-4 h-60 rounded-lg" src="{% static 'assets/images/globe.svg' %}">
     <div>
       {% if user.is_authenticated %}
@@ -30,48 +30,9 @@
   </div>
 </div>
 
-<!-- Temporary 2026 FIFA World Cup celebration showcase -->
-{% if world_cup_flags %}
-<div class="mx-auto w-11/12 lg:w-3/4 mt-4 mb-2">
-  <div class="card bg-base-200 border-2 border-success shadow-lg overflow-hidden">
-    <div class="card-body gap-4">
-      <div class="text-center">
-        <h2 class="text-4xl font-bold">It's World Cup season! ⚽ 🏆</h2>
-        <p class="mt-2 text-xl md:text-2xl font-['Alegreya'] max-w-3xl mx-auto">
-          The 2026 FIFA World Cup has kicked off across North America! 🇨🇦🇺🇸🇲🇽
-          Do you know the flags of all {{ world_cup_flags|length }} qualifying nations?
-          Lace up your boots and put your vexillology to the test. ⚽ 🌍
-        </p>
-      </div>
-
-      <div class="flex flex-wrap justify-center gap-2">
-        {% for flag in world_cup_flags %}
-        <a href="{% url 'country' flag.name|slugify %}"
-           class="tooltip transition hover:-translate-y-1 hover:scale-110"
-           data-tip="{{ flag.name }}">
-          <img src="{{ flag.flag_image_url }}" alt="Flag of {{ flag.name }}"
-               class="w-16 object-cover shadow ring-1 ring-base-300" loading="lazy" />
-        </a>
-        {% endfor %}
-      </div>
-
-      <div class="text-center mt-2">
-        <form method="post" action="{% url 'quiz' %}" class="inline">
-          {% csrf_token %}
-          <input type="hidden" name="gamemode" value="world_cup_2026">
-          <button type="submit" class="btn btn-success text-2xl md:text-3xl rounded-2xl px-6">
-            World Cup Quiz! ⚽
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-{% endif %}
-
 <span id="spinner" class="htmx-indicator loading loading-dots loading-xl my-2"></span>
 
-<form id="filters" class="mb-4 mx-auto w-3/4">
+<form id="filters" class="mb-4 mx-auto w-3/4" data-search-url="{% url 'search_countries' %}">
   <div class="flex flex-wrap items-end gap-2">
     <label class="input input-bordered w-full text-xl">
       <input
@@ -172,15 +133,18 @@
 {% include 'list.html' %}
 </div>
 
-<script>
-  window.addEventListener('pageshow', function () {
-    const filters = document.getElementById('filters');
-    if (!filters) return;
-    htmx.ajax('GET', '{% url "search_countries" %}', {
-      target: '#list',
-      source: filters,
-    });
-  });
-</script>
+{% endblock %}
 
+{% block scripts %}
+<script>
+    window.addEventListener("pageshow", () => {
+        const filters = document.getElementById("filters");
+        if (!filters) return;
+
+        htmx.ajax("GET", filters.dataset.searchUrl, {
+            target: "#list",
+            source: filters,
+        });
+    });
+</script>
 {% endblock %}

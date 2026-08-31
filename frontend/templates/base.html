@@ -17,7 +17,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
     {% htmx_script %}
     <script>
-        // Get theme from local storage (other script block at the bottom of body)
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'light' || savedTheme === 'dark') {
             document.documentElement.setAttribute('data-theme', savedTheme);
@@ -27,32 +26,17 @@
      crossorigin="anonymous"></script>
 </head>
 
-<body class="flex flex-col items-center min-h-screen" hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
+<body class="flex flex-col items-center min-h-screen"
+      data-correct-sound="{% static 'assets/correct.mp3' %}"
+      data-incorrect-sound="{% static 'assets/incorrect.wav' %}"
+      hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
 {% include 'nav.html' %}
 
-<!-- Temporary 2026 FIFA World Cup celebration banner -->
-{% if world_cup_2026_campaign_active %}
-<form method="post" action="{% url 'quiz' %}" class="w-full">
-    {% csrf_token %}
-    <input type="hidden" name="gamemode" value="world_cup_2026">
-    <button type="submit"
-        class="group w-full bg-gradient-to-l from-success via-warning to-success text-success-content font-['Alegreya'] p-2 shadow-md hover:brightness-140 transition cursor-pointer">
-        <span class="text-xl font-bold text-center">
-          The World Cup is here! Play the <span class="underline decoration-2 underline-offset-2">World Cup qualifiers</span> quiz ⚽🏆
-        </span>
-    </button>
-</form>
-{% endif %}
-
-
-<!-- Notification pop-ups with Django messages -->
 {% if messages %}
 <div id="toast-container" class="toast toast-top toast-center z-50">
     {% for message in messages %}
-    <!-- Using Django messages for success/fail messages -->
     <div role="alert" class="alert alert-{{ message.tags }} shadow-2xl w-[calc(100vw-2rem)] max-w-md text-base sm:text-xl px-4 sm:px-8 py-4 gap-4">
         {% if message.tags == "success" %}
-        <!-- Icons change depending on success/fail -->
         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
@@ -66,17 +50,6 @@
     {% endfor %}
 </div>
 
-<script>
-    // Toast will gently fade out after popping up
-    setTimeout(function() {
-        const container = document.getElementById('toast-container');
-        if (container) {
-            container.style.transition = "opacity 0.5s ease";
-            container.style.opacity = "0";
-            setTimeout(() => container.remove(), 300);
-        }
-    }, 3000);
-</script>
 {% endif %}
 
 {% block content %}
@@ -84,58 +57,8 @@
 {% endblock %}
 
 {% include 'footer.html' %}
-
-<script>
-    // Quiz dropdown helpers — bound once on the document so they survive HTMX swaps.
-    // Each handler looks up the elements at call time, so they work after content is replaced.
-
-    function sendText(text) {
-        const input = document.getElementById('guess');
-        const guessesDropdown = document.getElementById('guesses');
-        if (!input || !guessesDropdown) return;
-        input.value = text;
-        input.classList.add('bg-success');
-        guessesDropdown.innerHTML = '';
-        input.closest('form').requestSubmit();
-    }
-
-    document.addEventListener('click', function (e) {
-        const guessesDropdown = document.getElementById('guesses');
-        const input = document.getElementById('guess');
-        if (!guessesDropdown || !input) return;
-        if (!guessesDropdown.contains(e.target) && e.target !== input) {
-            guessesDropdown.innerHTML = '';
-        }
-    });
-
-    document.addEventListener('keydown', function (e) {
-        const input = document.getElementById('guess');
-        const guessesDropdown = document.getElementById('guesses');
-        if (!input || !guessesDropdown || document.activeElement !== input) return;
-
-        if (e.key === 'Escape') {
-            guessesDropdown.innerHTML = '';
-        }
-
-        if (e.key === 'Tab' || e.key === 'Enter') {
-            const firstButton = guessesDropdown.querySelector('button');
-            if (firstButton) {
-                e.preventDefault();
-                sendText(firstButton.textContent.trim());
-            }
-        }
-
-        if (!input.value) {
-            input.classList.remove('bg-success');
-        }
-    });
-
-    // Focus the guess input after every HTMX swap (fixes the click-to-type complaint).
-    document.addEventListener('htmx:afterSettle', function () {
-        const input = document.getElementById('guess');
-        if (input) input.focus();
-    });
-</script>
+<script src="{% static 'assets/scripts/site.js' %}" defer></script>
+{% block scripts %}{% endblock %}
 </body>
 
 </html>

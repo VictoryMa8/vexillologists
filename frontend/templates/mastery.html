@@ -8,7 +8,6 @@
         <p class="text-base-content/60 text-lg">Collect flags by guessing them correctly!</p>
     </div>
 
-    <!-- Progress bar -->
     <div class="w-full max-w-md flex flex-col gap-2">
         <div class="flex justify-between text-sm text-base-content/70">
             <span>{{ mastered_count }} / {{ total_count }} mastered</span>
@@ -21,23 +20,45 @@
         </progress>
     </div>
 
-    <!-- Flag grid -->
-    <div class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-2 w-full">
+    <div class="mastery-review-callout w-full max-w-2xl flex flex-col sm:flex-row items-center gap-4 p-5">
+        <div class="text-4xl" aria-hidden="true">🧠</div>
+        <div class="grow text-center sm:text-left">
+            <h2 class="text-2xl font-bold">Sharpen your weak spots</h2>
+            <p class="text-base-content/65 text-sm mt-1">Mastery Review prioritizes unmastered flags and anything you have missed before.</p>
+        </div>
+        <form method="post" action="{% url 'quiz' %}" class="shrink-0">
+            {% csrf_token %}
+            <input type="hidden" name="gamemode" value="mastery_review">
+            <button type="submit" class="btn btn-primary">Start review</button>
+        </form>
+    </div>
+
+    <nav class="mastery-filter-bar" aria-label="Filter mastery flags">
+        <button type="button" class="btn btn-primary btn-sm" data-mastery-filter="all" aria-pressed="true">All <span class="opacity-60">{{ total_count }}</span></button>
+        <button type="button" class="btn btn-ghost btn-sm" data-mastery-filter="mastered" aria-pressed="false">Mastered <span class="opacity-60">{{ mastered_count }}</span></button>
+        <button type="button" class="btn btn-ghost btn-sm" data-mastery-filter="review" aria-pressed="false">Needs review <span class="opacity-60">{{ review_count }}</span></button>
+    </nav>
+
+    <div id="mastery-grid" class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-3 w-full">
         {% for entry in entries %}
-        <div class="flex flex-col items-center">
+        <div class="mastery-entry flex flex-col items-center" data-mastered="{% if entry.mastered %}true{% else %}false{% endif %}" data-review="{% if entry.needs_review %}true{% else %}false{% endif %}">
             <div class="relative w-full">
                 <img
                     src="{{ entry.flag_image_url }}"
                     alt="{{ entry.name }}"
-                    class="w-full aspect-square object-contain drop-shadow-md{% if not entry.mastered %} opacity-40{% endif %}"
+                    class="w-full aspect-square object-contain shadow-sm{% if not entry.mastered %} opacity-40{% endif %}"
+                    loading="lazy"
+                    decoding="async"
                 />
                 {% if not entry.mastered %}
-                <!-- Lock icon overlay on unmastered flags -->
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-base-content/40" viewBox="0 0 24 24" fill="currentColor">
                         <path fill-rule="evenodd" d="M12 1.5a5.25 5.25 0 0 0-5.25 5.25v3a3 3 0 0 0-3 3v6.75a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3v-6.75a3 3 0 0 0-3-3v-3A5.25 5.25 0 0 0 12 1.5Zm3.75 8.25v-3a3.75 3.75 0 1 0-7.5 0v3h7.5Z" clip-rule="evenodd" />
                     </svg>
                 </div>
+                {% endif %}
+                {% if entry.wrong_answers %}
+                <span class="badge badge-warning badge-xs absolute top-0 right-0" title="Missed {{ entry.wrong_answers }} time{{ entry.wrong_answers|pluralize }}">↻ {{ entry.wrong_answers }}</span>
                 {% endif %}
             </div>
             <span class="w-full text-sm text-center leading-tight break-words{% if not entry.mastered %} text-base-content/30{% endif %}">
@@ -48,4 +69,26 @@
     </div>
 
 </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function setMasteryFilter(filter, activeButton) {
+        document.querySelectorAll(".mastery-entry").forEach((entry) => {
+            entry.hidden = filter !== "all" && entry.dataset[filter] !== "true";
+        });
+        document.querySelectorAll("[data-mastery-filter]").forEach((button) => {
+            const active = button === activeButton;
+            button.classList.toggle("btn-primary", active);
+            button.classList.toggle("btn-ghost", !active);
+            button.setAttribute("aria-pressed", String(active));
+        });
+    }
+
+    document.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-mastery-filter]");
+        if (button) setMasteryFilter(button.dataset.masteryFilter, button);
+    });
+</script>
 {% endblock %}

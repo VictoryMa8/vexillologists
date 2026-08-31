@@ -1,0 +1,79 @@
+"""Country queries, serialization, filtering, and caching."""
+
+from django.core.cache import cache
+
+from .cache_keys import COUNTRIES as COUNTRIES_CACHE_KEY
+from .models import Country
+
+
+COUNTRIES_CACHE_TTL = 60 * 60
+
+
+def get_countries():
+    countries = cache.get(COUNTRIES_CACHE_KEY)
+    if countries is not None:
+        return countries
+
+    countries = [
+        {
+            "name": country.name,
+            "flag_emoji": country.flag_emoji,
+            "flag_image_url": country.flag_image_url,
+            "capital": country.capital,
+            "population_2024": country.population,
+            "area_km2": country.area_km2,
+            "official_language": country.official_language,
+            "region": country.region,
+            "entry_type": country.entry_type,
+            "fact": country.fact,
+            "aliases": country.aliases,
+        }
+        for country in Country.objects.order_by("name")
+    ]
+    cache.set(COUNTRIES_CACHE_KEY, countries, COUNTRIES_CACHE_TTL)
+    return countries
+
+
+def filter_countries(
+    countries,
+    query="",
+    continent="",
+    min_area=None,
+    min_population=None,
+    entry_type="",
+):
+    query = (query or "").strip().casefold()
+    continent = (continent or "").strip()
+    entry_type = (entry_type or "").strip()
+
+    result = list(countries)
+    if query:
+        result = [
+            country
+            for country in result
+            if any(
+                (name or "").casefold().startswith(query)
+                for name in [country["name"], *(country.get("aliases") or [])]
+            )
+        ]
+    if continent:
+        result = [country for country in result if country.get("region") == continent]
+    if entry_type:
+        result = [
+            country for country in result if country.get("entry_type") == entry_type
+        ]
+    if min_area is not None:
+        result = [
+            country for country in result if (country.get("area_km2") or 0) >= min_area
+        ]
+    if min_population is not None:
+        result = [
+            country
+            for country in result
+            if (country.get("population_2024") or 0) >= min_population
+        ]
+    return result
+
+
+def filter_choices(countries, field):
+    return sorted({value.strip() for country in countries if (value := country.get(field))})

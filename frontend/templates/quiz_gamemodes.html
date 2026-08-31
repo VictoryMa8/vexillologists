@@ -1,343 +1,73 @@
-<!-- Gamemode Selection Screen -->
-<div class="flex flex-col items-center gap-8 w-full px-4 md:w-200 lg:w-300 mt-8 mb-20">
-
-    <div class="text-center">
-        <h1 class="text-4xl font-bold">Choose a Game Mode</h1>
-        <p class="text-base-content/60 mt-2">Select how you want to play...</p>
-        {% if user.is_authenticated %}
-        <p class="text-lg mt-2">Your High Score: <span class="font-bold text-warning">{{ user.high_score }} ⭐</span></p>
-        {% endif %}
-    </div>
-
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-2 w-full">
-
-        <!-- World Cup 2026 (temporary, playable) -->
-        {% if world_cup_2026_campaign_active %}
-        {% with gp=gamemode_progress.world_cup_2026 %}
-        <form method="post" action="{% url 'quiz' %}" class="contents">
-            {% csrf_token %}
-            <input type="hidden" name="gamemode" value="world_cup_2026">
-            <button type="submit"
-                class="card {% if gp.mastered == gp.total %}bg-warning/40{% else %}bg-base-200{% endif %} border-2 border-warning hover:shadow-lg hover:shadow-warning/25 hover:bg-warning/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
-                <div class="card-body gap-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-4xl text-success">⚽ {% if gp.mastered == gp.total %}✔︎{% endif %}</span>
-                        <span class="badge badge-warning badge-sm font-semibold">Limited Time</span>
-                    </div>
-                    <h2 class="card-title text-xl">World Cup 2026 🏆</h2>
-                    <p class="text-sm text-base-content/60 leading-relaxed">
-                        Celebrate the 2026 FIFA World Cup! Guess the flags of every qualifying nation without a single mistake.
-                    </p>
-                    <div class="flex justify-between text-xs text-base-content/40 mt-1">
-                        <span>{{ gp.mastered }} / {{ gp.total }} mastered</span>
-                        <span>{% widthratio gp.mastered gp.total 100 %}%</span>
-                    </div>
-                    <progress class="progress progress-success w-full h-1.5" value="{{ gp.mastered }}" max="{{ gp.total }}"></progress>
+<main class="game-mode-screen flex flex-col items-center gap-7 w-full max-w-6xl px-4 mt-6 mb-20">
+    <header class="mode-picker-hero w-8/10 text-center overflow-hidden relative">
+        <div class="relative z-1 px-5 py-8 md:py-10">
+            <div class="mode-hero-panel mx-auto max-w-2xl p-4">
+                <p class="mode-eyebrow">Choose your adventure</p>
+                <h1 class="mode-picker-title text-3xl md:text-5xl font-bold mt-1">Pick your challenge</h1>
+                <p class="text-base-content/70 mt-2 text-lg max-w-xl mx-auto">Study some interesting flags, race against the clock, or test your knowledge for a perfect ten.</p>
+                {% if user.is_authenticated %}
+                <div class="inline-flex items-center gap-2 mt-5 mode-score-chip">
+                    <span aria-hidden="true">🏆</span><span>Your classic best</span><strong>{{ user.high_score }}</strong>
                 </div>
-            </button>
-        </form>
-        {% endwith %}
-        {% endif %}
-
-        <!-- World Tour (playable) -->
-        {% with gp=gamemode_progress.world_tour %}
-        <form method="post" action="{% url 'quiz' %}" class="contents">
-            {% csrf_token %}
-            <input type="hidden" name="gamemode" value="world_tour">
-            <button type="submit"
-                class="card {% if gp.mastered == gp.total %}bg-success/40{% else %}bg-base-200{% endif %} border-2 border-success hover:shadow-lg hover:shadow-success/25 hover:bg-success/40 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
-                <div class="card-body gap-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-4xl text-success">🌍 {% if gp.mastered == gp.total %}✔︎{% endif %}</span>
-                        <span class="badge badge-primary badge-sm font-semibold">Very Hard</span>
-                    </div>
-                    <h2 class="card-title text-xl">World Tour</h2>
-                    <p class="text-sm text-base-content/60 leading-relaxed">
-                        Guess flags from countries and territories all over the world. Keep your streak alive and try to get on the leaderboard!
-                    </p>
-                    <div class="flex justify-between text-xs text-base-content/40 mt-1">
-                        <span>{{ gp.mastered }} / {{ gp.total }} mastered</span>
-                        <span>{% widthratio gp.mastered gp.total 100 %}%</span>
-                    </div>
-                    <progress class="progress progress-success w-full h-1.5" value="{{ gp.mastered }}" max="{{ gp.total }}"></progress>
-                </div>
-            </button>
-        </form>
-        {% endwith %}
-
-        <!-- Africa Challenge (playable) -->
-        {% with gp=gamemode_progress.africa %}
-        <form method="post" action="{% url 'quiz' %}" class="contents">
-            {% csrf_token %}
-            <input type="hidden" name="gamemode" value="africa">
-            <button type="submit"
-                class="card {% if gp.mastered == gp.total %}bg-warning/40{% else %}bg-base-200{% endif %} border-2 border-warning hover:shadow-lg hover:shadow-warning/25 hover:bg-warning/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
-                <div class="card-body gap-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-4xl text-success">🦒 {% if gp.mastered == gp.total %}✔︎{% endif %}</span>
-                        <span class="badge badge-error badge-sm font-semibold">Hard</span>
-                    </div>
-                    <h2 class="card-title text-xl">Africa Challenge</h2>
-                    <p class="text-sm text-base-content/60 leading-relaxed">
-                        Do you know your African flags? Guess all of them without a single mistake.
-                    </p>
-                    <div class="flex justify-between text-xs text-base-content/40 mt-1">
-                        <span>{{ gp.mastered }} / {{ gp.total }} mastered</span>
-                        <span>{% widthratio gp.mastered gp.total 100 %}%</span>
-                    </div>
-                    <progress class="progress progress-success w-full h-1.5" value="{{ gp.mastered }}" max="{{ gp.total }}"></progress>
-                </div>
-            </button>
-        </form>
-        {% endwith %}
-
-        <!-- Subnational Entities (playable) -->
-        {% with gp=gamemode_progress.subnational_entities %}
-        <form method="post" action="{% url 'quiz' %}" class="contents">
-            {% csrf_token %}
-            <input type="hidden" name="gamemode" value="subnational_entities">
-            <button type="submit"
-                class="card {% if gp.mastered == gp.total %}bg-info/40{% else %}bg-base-200{% endif %} border-2 border-info hover:shadow-lg hover:shadow-info/25 hover:bg-info/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
-                <div class="card-body gap-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-4xl text-success">🐓 {% if gp.mastered == gp.total %}✔︎{% endif %}</span>
-                        <span class="badge badge-error badge-sm font-semibold">Hard</span>
-                    </div>
-                    <h2 class="card-title text-xl">Subnational Entities Challenge</h2>
-                    <p class="text-sm text-base-content/60 leading-relaxed">
-                        This one's a bit tricky. Guess a few of the world's unique subnational entities. States, provinces, etc.!
-                    </p>
-                    <div class="flex justify-between text-xs text-base-content/40 mt-1">
-                        <span>{{ gp.mastered }} / {{ gp.total }} mastered</span>
-                        <span>{% widthratio gp.mastered gp.total 100 %}%</span>
-                    </div>
-                    <progress class="progress progress-success w-full h-1.5" value="{{ gp.mastered }}" max="{{ gp.total }}"></progress>
-                </div>
-            </button>
-        </form>
-        {% endwith %}
-
-        <!-- Asia Challenge (playable) -->
-        {% with gp=gamemode_progress.asia %}
-        <form method="post" action="{% url 'quiz' %}" class="contents">
-            {% csrf_token %}
-            <input type="hidden" name="gamemode" value="asia">
-            <button type="submit"
-                class="card {% if gp.mastered == gp.total %}bg-error/40{% else %}bg-base-200{% endif %} border-2 border-error hover:shadow-lg hover:shadow-error/25 hover:bg-error/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
-                <div class="card-body gap-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-4xl text-success">🏯 {% if gp.mastered == gp.total %}✔︎{% endif %}</span>
-                        <span class="badge badge-error badge-sm font-semibold">Hard</span>
-                    </div>
-                    <h2 class="card-title text-xl">Asia Challenge</h2>
-                    <p class="text-sm text-base-content/60 leading-relaxed">
-                        Guess a wide array of flags from Asia without a single mistake. Do you have what it takes?
-                    </p>
-                    <div class="flex justify-between text-xs text-base-content/40 mt-1">
-                        <span>{{ gp.mastered }} / {{ gp.total }} mastered</span>
-                        <span>{% widthratio gp.mastered gp.total 100 %}%</span>
-                    </div>
-                    <progress class="progress progress-success w-full h-1.5" value="{{ gp.mastered }}" max="{{ gp.total }}"></progress>
-                </div>
-            </button>
-        </form>
-        {% endwith %}
-
-        <!-- Europe Challenge (playable) -->
-        {% with gp=gamemode_progress.europe %}
-        <form method="post" action="{% url 'quiz' %}" class="contents">
-            {% csrf_token %}
-            <input type="hidden" name="gamemode" value="europe">
-            <button type="submit"
-                class="card {% if gp.mastered == gp.total %}bg-primary/40{% else %}bg-base-200{% endif %} border-2 border-primary hover:shadow-lg hover:shadow-primary/25 hover:bg-primary/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
-                <div class="card-body gap-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-4xl text-success">🇪🇺 {% if gp.mastered == gp.total %}✔︎{% endif %}</span>
-                        <span class="badge badge-error badge-sm font-semibold">Hard</span>
-                    </div>
-                    <h2 class="card-title text-xl">Europe Challenge</h2>
-                    <p class="text-sm text-base-content/60 leading-relaxed">
-                        Guess all flags from Europe without a single mistake. That's a lot of flags!
-                    </p>
-                    <div class="flex justify-between text-xs text-base-content/40 mt-1">
-                        <span>{{ gp.mastered }} / {{ gp.total }} mastered</span>
-                        <span>{% widthratio gp.mastered gp.total 100 %}%</span>
-                    </div>
-                    <progress class="progress progress-success w-full h-1.5" value="{{ gp.mastered }}" max="{{ gp.total }}"></progress>
-                </div>
-            </button>
-        </form>
-        {% endwith %}
-
-        <!-- Oceania Challenge (playable) -->
-        {% with gp=gamemode_progress.oceania %}
-        <form method="post" action="{% url 'quiz' %}" class="contents">
-            {% csrf_token %}
-            <input type="hidden" name="gamemode" value="oceania">
-            <button type="submit"
-                class="card {% if gp.mastered == gp.total %}bg-accent/40{% else %}bg-base-200{% endif %} border-2 border-accent hover:shadow-lg hover:shadow-accent/25 hover:bg-accent/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
-                <div class="card-body gap-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-4xl text-success">🌴 {% if gp.mastered == gp.total %}✔︎{% endif %}</span>
-                        <span class="badge badge-warning badge-sm font-semibold">Medium</span>
-                    </div>
-                    <h2 class="card-title text-xl">Oceania Challenge</h2>
-                    <p class="text-sm text-base-content/60 leading-relaxed">
-                        Do you really know Oceania? Go ahead, try to guess all of its flags.
-                    </p>
-                    <div class="flex justify-between text-xs text-base-content/40 mt-1">
-                        <span>{{ gp.mastered }} / {{ gp.total }} mastered</span>
-                        <span>{% widthratio gp.mastered gp.total 100 %}%</span>
-                    </div>
-                    <progress class="progress progress-success w-full h-1.5" value="{{ gp.mastered }}" max="{{ gp.total }}"></progress>
-                </div>
-            </button>
-        </form>
-        {% endwith %}
-
-        <!-- Occupied or Disputed Countries (playable) -->
-        {% with gp=gamemode_progress.occupied_or_disputed_countries %}
-        <form method="post" action="{% url 'quiz' %}" class="contents">
-            {% csrf_token %}
-            <input type="hidden" name="gamemode" value="occupied_or_disputed_countries">
-            <button type="submit"
-                class="card {% if gp.mastered == gp.total %}bg-primary/40{% else %}bg-base-200{% endif %} border-2 border-primary hover:shadow-lg hover:shadow-primary/25 hover:bg-primary/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
-                <div class="card-body gap-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-4xl text-success">💼 {% if gp.mastered == gp.total %}✔︎{% endif %}</span>
-                        <span class="badge badge-warning badge-sm font-semibold">Medium</span>
-                    </div>
-                    <h2 class="card-title text-xl">Occupied or Disputed Countries Challenge</h2>
-                    <p class="text-sm text-base-content/60 leading-relaxed">
-                        We can all be friends, right? Guess a few of the world's occupied or disputed countries.
-                    </p>
-                    <div class="flex justify-between text-xs text-base-content/40 mt-1">
-                        <span>{{ gp.mastered }} / {{ gp.total }} mastered</span>
-                        <span>{% widthratio gp.mastered gp.total 100 %}%</span>
-                    </div>
-                    <progress class="progress progress-success w-full h-1.5" value="{{ gp.mastered }}" max="{{ gp.total }}"></progress>
-                </div>
-            </button>
-        </form>
-        {% endwith %}
-
-        <!-- Autonomous Regions (playable) -->
-        {% with gp=gamemode_progress.autonomous_regions %}
-        <form method="post" action="{% url 'quiz' %}" class="contents">
-            {% csrf_token %}
-            <input type="hidden" name="gamemode" value="autonomous_regions">
-            <button type="submit"
-                class="card {% if gp.mastered == gp.total %}bg-error/40{% else %}bg-base-200{% endif %} border-2 border-error hover:shadow-lg hover:shadow-error/25 hover:bg-error/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
-                <div class="card-body gap-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-4xl text-success">🌋 {% if gp.mastered == gp.total %}✔︎{% endif %}</span>
-                        <span class="badge badge-warning badge-sm font-semibold">Medium</span>
-                    </div>
-                    <h2 class="card-title text-xl">Autonomous Regions Challenge</h2>
-                    <p class="text-sm text-base-content/60 leading-relaxed">
-                        There are some interesting ones here. Guess of the world's unique autonomous regions!
-                    </p>
-                    <div class="flex justify-between text-xs text-base-content/40 mt-1">
-                        <span>{{ gp.mastered }} / {{ gp.total }} mastered</span>
-                        <span>{% widthratio gp.mastered gp.total 100 %}%</span>
-                    </div>
-                    <progress class="progress progress-success w-full h-1.5" value="{{ gp.mastered }}" max="{{ gp.total }}"></progress>
-                </div>
-            </button>
-        </form>
-        {% endwith %}
-
-        <!-- North America Challenge (playable) -->
-        {% with gp=gamemode_progress.north_america %}
-        <form method="post" action="{% url 'quiz' %}" class="contents">
-            {% csrf_token %}
-            <input type="hidden" name="gamemode" value="north_america">
-            <button type="submit"
-                class="card {% if gp.mastered == gp.total %}bg-info/40{% else %}bg-base-200{% endif %} border-2 border-info hover:shadow-lg hover:shadow-info/25 hover:bg-info/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
-                <div class="card-body gap-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-4xl text-success">🏔️ {% if gp.mastered == gp.total %}✔︎{% endif %}</span>
-                        <span class="badge badge-success badge-sm font-semibold">Easy</span>
-                    </div>
-                    <h2 class="card-title text-xl">North America Challenge</h2>
-                    <p class="text-sm text-base-content/60 leading-relaxed">
-                        Some of these flags are gonna be tricky! Guess all flags from North America.
-                    </p>
-                    <div class="flex justify-between text-xs text-base-content/40 mt-1">
-                        <span>{{ gp.mastered }} / {{ gp.total }} mastered</span>
-                        <span>{% widthratio gp.mastered gp.total 100 %}%</span>
-                    </div>
-                    <progress class="progress progress-success w-full h-1.5" value="{{ gp.mastered }}" max="{{ gp.total }}"></progress>
-                </div>
-            </button>
-        </form>
-        {% endwith %}
-
-        <!-- South America Challenge (playable) -->
-        {% with gp=gamemode_progress.south_america %}
-        <form method="post" action="{% url 'quiz' %}" class="contents">
-            {% csrf_token %}
-            <input type="hidden" name="gamemode" value="south_america">
-            <button type="submit"
-                class="card {% if gp.mastered == gp.total %}bg-secondary/40{% else %}bg-base-200{% endif %} border-2 border-secondary hover:shadow-lg hover:shadow-secondary/25 hover:bg-secondary/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
-                <div class="card-body gap-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-4xl text-success">🦎 {% if gp.mastered == gp.total %}✔︎{% endif %}</span>
-                        <span class="badge badge-success badge-sm font-semibold">Easy</span>
-                    </div>
-                    <h2 class="card-title text-xl">South America Challenge</h2>
-                    <p class="text-sm text-base-content/60 leading-relaxed">
-                        Guess all flags from South America without a single mistake. Not too difficult, right?
-                    </p>
-                    <div class="flex justify-between text-xs text-base-content/40 mt-1">
-                        <span>{{ gp.mastered }} / {{ gp.total }} mastered</span>
-                        <span>{% widthratio gp.mastered gp.total 100 %}%</span>
-                    </div>
-                    <progress class="progress progress-success w-full h-1.5" value="{{ gp.mastered }}" max="{{ gp.total }}"></progress>
-                </div>
-            </button>
-        </form>
-        {% endwith %}
-
-        <!-- Miscellaneous Challenge (playable) -->
-        {% with gp=gamemode_progress.miscellaneous %}
-        <form method="post" action="{% url 'quiz' %}" class="contents">
-            {% csrf_token %}
-            <input type="hidden" name="gamemode" value="miscellaneous">
-            <button type="submit"
-                class="card {% if gp.mastered == gp.total %}bg-warning/40{% else %}bg-base-200{% endif %} border-2 border-warning hover:shadow-lg hover:shadow-warning/25 hover:bg-warning/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left w-full">
-                <div class="card-body gap-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-4xl text-success">🤔 {% if gp.mastered == gp.total %}✔︎{% endif %}</span>
-                        <span class="badge badge-success badge-sm font-semibold">Easy</span>
-                    </div>
-                    <h2 class="card-title text-xl">Miscellaneous Challenge</h2>
-                    <p class="text-sm text-base-content/60 leading-relaxed">
-                        Learn about a few interesting flags from history and around the world.
-                    </p>
-                    <div class="flex justify-between text-xs text-base-content/40 mt-1">
-                        <span>{{ gp.mastered }} / {{ gp.total }} mastered</span>
-                        <span>{% widthratio gp.mastered gp.total 100 %}%</span>
-                    </div>
-                    <progress class="progress progress-success w-full h-1.5" value="{{ gp.mastered }}" max="{{ gp.total }}"></progress>
-                </div>
-            </button>
-        </form>
-        {% endwith %}
-
-        <!-- Speed Round (locked) -->
-        <div class="card bg-base-200 border-2 border-base-300 opacity-45 cursor-not-allowed text-left">
-            <div class="card-body gap-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-4xl">⏱️</span>
-                    <span class="badge badge-ghost badge-sm">Coming Soon</span>
-                </div>
-                <h2 class="card-title text-xl">Speed Round</h2>
-                <p class="text-sm text-base-content/60 leading-relaxed">
-                    Race against the clock. Answer as many flags as you can before time runs out.
-                </p>
+                {% endif %}
             </div>
         </div>
+    </header>
 
-    </div>
-</div>
+    {% for section in gamemode_sections %}
+    <details class="mode-section w-full group" data-section="{{ section.key }}" {% if section.open %}open{% endif %}>
+        <summary class="mode-section-summary flex items-center gap-3 cursor-pointer list-none px-5 py-4 mb-3">
+            <span class="mode-section-icon" aria-hidden="true">{{ section.icon }}</span>
+            <span class="grow min-w-0">
+                <span class="block text-2xl md:text-3xl font-bold font-['Alegreya']">{{ section.title }}</span>
+                <span class="mode-section-subtitle block text-sm font-normal">{{ section.subtitle }}</span>
+            </span>
+            <span class="mode-section-count">{{ section.cards|length }} games</span>
+            <span class="mode-chevron text-xl transition-transform group-open:rotate-180" aria-hidden="true">⌄</span>
+        </summary>
+
+        <div class="mode-card-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-2">
+            {% for card in section.cards %}
+            <form method="post" action="{% url 'quiz' %}" class="contents">
+                {% csrf_token %}
+                <input type="hidden" name="gamemode" value="{{ card.key }}">
+                <button type="submit" data-tone="{{ card.tone }}" {% if card.completed_today %}disabled{% endif %}
+                    class="game-mode-card card text-left w-full hover:cursor-pointer">
+                    <div class="card-body relative z-1 gap-3 p-5">
+                        <div class="flex items-start justify-between gap-3">
+                            <span class="mode-icon-shell" aria-hidden="true">{{ card.icon }}</span>
+                            <span class="badge mode-badge {% if card.completed_today %}badge-success{% endif %}">
+                                {% if card.completed_today %}✓ Completed today{% else %}{{ card.difficulty }}{% endif %}
+                            </span>
+                        </div>
+                        <div>
+                            <h3 class="mode-card-title card-title text-2xl">{{ card.name }}</h3>
+                            <p class="mode-card-description text-sm leading-relaxed mt-1">{{ card.description }}</p>
+                        </div>
+
+                        <div class="mode-card-footer mt-auto pt-3 flex items-end justify-between gap-3">
+                            <span class="mode-rule-label">{{ card.rule_label }}</span>
+                            <span class="mode-card-meta text-xs text-right">
+                                {% if user.is_authenticated and card.best_score is not None %}
+                                Best <strong>{{ card.best_score }}{% if card.score_cap %}/{{ card.score_cap }}{% endif %}</strong>
+                                {% elif user.is_authenticated and card.category != 'featured' %}
+                                {{ card.mastered }}/{{ card.total }} mastered
+                                {% elif card.score_cap %}
+                                {{ card.score_cap }} flags
+                                {% else %}
+                                {{ card.total }} flags
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if user.is_authenticated and card.category != 'featured' %}
+                        <progress class="progress progress-success w-full h-1.5" value="{{ card.mastered }}"
+                            max="{{ card.total }}"></progress>
+                        {% endif %}
+                    </div>
+                </button>
+            </form>
+            {% endfor %}
+        </div>
+    </details>
+    {% endfor %}
+</main>

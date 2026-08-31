@@ -24,5 +24,5 @@
     <h2><b>Region: </b>{{ chosen_country.region }}</h2>
 </div>
 
-<button class="mb-4 btn btn-outline btn-success btn-wide" onclick="history.back()">Go Back</button>
+<a href="{% url 'index' %}" class="mb-4 btn btn-outline btn-success btn-wide">Back to explorer</a>
 {% endblock %}

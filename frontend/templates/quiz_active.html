@@ -1,195 +1,155 @@
-<div id="quiz-active" class="flex flex-col items-center w-full">
+<main id="quiz-active" class="flex flex-col items-center w-full px-3 pb-20">
+    <header class="w-full max-w-3xl flex flex-col items-center gap-3 mt-5 mb-4">
+        <div class="flex flex-wrap items-center justify-center gap-2">
+            <span class="badge badge-success badge-lg">{{ gamemode_name }}</span>
+            <button type="button" class="btn btn-ghost btn-sm" data-sound-toggle>🔊 Sound</button>
+            <button type="button" class="btn btn-warning btn-sm" data-open-dialog="change_gamemode_modal">Change mode</button>
+        </div>
+        <h1 class="sr-only">{{ gamemode_name }} flag quiz</h1>
 
-<!-- Active Game -->
-<h1 class="text-4xl mt-6 font-bold text-center">Playing: <span class="text-success italic">{{ gamemode_name }}</span></h1>
-<!-- Change Game Mode button (in-game) -->
-<div class="flex justify-center mt-4">
-    <button
-        onclick="document.getElementById('change_gamemode_modal').showModal()"
-        class="btn btn-warning">
-        🔄 Change Game Mode
-    </button>
-</div>
-{% if user.is_authenticated %}
-<h1 class="text-3xl text-center my-2">Your Highscore: {{ user.high_score }} ⭐️</h1>
-{% else %}
-<p class="text-lg text-center my-2 text-base-content/75 italic">
-    Playing as a guest
-</p>
-{% endif %}
-
-<div class="flex flex-col gap-4 w-full px-4 md:px-0 md:w-150 mb-24">
-    <div class="flex flex-col items-center border-success border-1 rounded-2xl p-8">
-        {% if random_country %}
-        <h1 class="text-8xl">
-            <img src="{{ random_country.flag_image_url }}" class="h-[1.5em] object-contain drop-shadow-md inline-block rounded-md flag-pop" alt="Flag">
-        </h1>
-        <h1 class="text-4xl mt-4 font-bold text-center">What country or territory is this?</h1>
-        <p class="text-lg mt-2 italic text-center opacity-50">New: Submit the first suggestion in dropdown with Tab or Enter!</p>
-        {% else %}
-        <h1 class="text-2xl mt-8 font-bold">Error...</h1>
-        {% endif %}
-
-        <form class="flex flex-col items-center justify-center mt-4 w-full"
-              hx-post="{% url 'quiz' %}"
-              hx-target="#quiz-active"
-              hx-swap="outerHTML"
-              hx-on::before-request="document.getElementById('submit-btn').classList.add('loading')"
-              hx-on::after-request="document.getElementById('submit-btn').classList.remove('loading')"
-              >
-            {% csrf_token %}
-            <!-- Relative wrapper so the dropdown can be absolutely positioned below the input -->
-            <div class="relative w-full max-w-xs">
-                <input
-                id="guess"
-                type="text"
-                placeholder="Guess the country..."
-                class="input input-success w-full text-xl text-center"
-                name="guess"
-                autocomplete="off"
-                autofocus
-                hx-get="{% url 'search_guesses' %}"
-                hx-trigger="keyup[event.key !== 'Tab' && event.key !== 'Enter'] changed"
-                hx-target="#guesses"
-                hx-swap="innerHTML"
-                required
-                />
-                <!-- Dropdown anchored directly below the input -->
-                <div id="guesses" class="absolute top-full left-0 right-0 z-50 mt-1 transition-opacity duration-150">
-                    {% include 'guesses.html' %}
-                </div>
+        <div class="stats stats-horizontal bg-base-200 shadow-sm max-w-full">
+            <div class="stat place-items-center px-4 py-2">
+                <div class="stat-title">{% if ruleset == 'sudden_death' %}Streak{% else %}Score{% endif %}</div>
+                <div class="stat-value text-2xl text-success streak-appear">{% if ruleset == 'sudden_death' %}{{ streak }}{% else %}{{ score }}{% endif %}</div>
             </div>
-            <button id="submit-btn" type="submit" class="btn btn-success mt-4 text-2xl">Guess</button>
-        </form>
+            {% if lives is not None %}
+            <div class="stat place-items-center px-4 py-2">
+                <div class="stat-title">Lives</div>
+                <div class="stat-value text-2xl text-error" aria-label="{{ lives }} lives remaining">{{ lives }} ❤️</div>
+            </div>
+            {% endif %}
+            {% if round_target %}
+            <div class="stat place-items-center px-4 py-2">
+                <div class="stat-title">Question</div>
+                <div class="stat-value text-2xl">{{ question_number }}/{{ round_target }}</div>
+            </div>
+            {% endif %}
+            {% if time_remaining is not None and not game_finished %}
+            <div class="stat place-items-center px-4 py-2">
+                <div class="stat-title">Time</div>
+                <div id="quiz-timer" class="stat-value text-2xl text-warning" data-seconds="{{ time_remaining }}" aria-live="polite">{{ time_remaining }}s</div>
+            </div>
+            {% endif %}
+        </div>
+    </header>
 
-        <h1 class="text-2xl mt-4 font-bold streak-appear">Streak: {{ streak }}🔥</h1>
-        {% if pool_size %}
-        <p class="text-xl text-base-content mt-2">{{ streak }} / {{ pool_size }} flags named</p>
-        {% endif %}
+    <section class="flex flex-col gap-4 w-full max-w-2xl">
+        <div class="flex flex-col items-center border border-success/70 bg-base-100 rounded-2xl p-5 sm:p-8 shadow-sm">
+            {% if feedback %}
+            <div id="quiz-feedback" role="status" aria-live="polite" data-status="{{ feedback.status }}"
+                 class="alert {% if feedback.status == 'success' %}alert-success{% elif feedback.status == 'error' %}alert-error{% else %}alert-info{% endif %} mb-5 max-w-md">
+                <span class="font-semibold">{{ feedback.text }}</span>
+            </div>
+            {% else %}
+            <div id="quiz-feedback" role="status" aria-live="polite" class="sr-only"></div>
+            {% endif %}
 
-        <button id="fact-button" onclick="showFact()" class="btn btn-info mt-4">Hint</button>
-        <p id="fact" class="hidden text-xl text-base-content mt-4 italic text-center">{{ random_country.fact }}</p>
-        <script>
-            // Inline so fact/button refs reset on every HTMX swap to the new elements
-            fact = document.getElementById("fact");
-            button = document.getElementById("fact-button");
-            function showFact() {
-                fact.classList.remove('hidden');
-                button.classList.add('hidden');
-            }
-        </script>
-    </div>
-
-    <div class="flex flex-col items-center border-success border-1 rounded-2xl p-8 md:h-130 overflow-y-auto">
-        {% if collected %}
-            <div class="flex flex-wrap items-center justify-center gap-2">
-                {% for i in collected %}
-                    <div class="flex flex-col items-center">
-                        <img src="{{ i.flag }}" title="{{ i.fact }}"
-                        class="h-18 w-auto inline-block drop-shadow-sm rounded-sm cursor-help" alt="Flag">
-                        <p class="mt-1 max-w-30 text-center break-words">{{ i.name }}</p>
+            {% if random_country %}
+                {% if multiple_choice %}
+                <h2 class="text-3xl sm:text-4xl font-bold text-center mb-5">Which flag belongs to {{ random_country.name }}?</h2>
+                <form id="guess-form" class="grid grid-cols-2 gap-3 w-full max-w-lg"
+                      hx-post="{% url 'quiz' %}" hx-target="#quiz-active" hx-swap="outerHTML" hx-disabled-elt="find button">
+                    {% csrf_token %}
+                    <input type="hidden" name="round_token" value="{{ round_token }}">
+                    {% for choice in choices %}
+                    <button type="submit" name="guess" value="{{ choice.name }}"
+                            class="btn h-auto min-h-28 sm:min-h-36 p-3 bg-base-200 hover:bg-success/20 border-base-300"
+                            aria-label="Flag choice {{ forloop.counter }}">
+                        <img src="{{ choice.flag_image_url }}" class="max-h-24 sm:max-h-30 w-full object-contain drop-shadow-md rounded-sm" alt="Flag choice {{ forloop.counter }}">
+                    </button>
+                    {% endfor %}
+                </form>
+                {% else %}
+                <img src="{{ random_country.flag_image_url }}" class="max-h-48 sm:max-h-56 max-w-full object-contain drop-shadow-md rounded-md flag-pop" alt="Mystery flag">
+                <h2 class="text-3xl sm:text-4xl mt-5 font-bold text-center">What country or territory is this?</h2>
+                <p class="text-sm mt-2 italic text-center text-base-content/50">Submit the first suggestion with Tab or Enter.</p>
+                <form id="guess-form" class="flex flex-col items-center justify-center mt-4 w-full"
+                      hx-post="{% url 'quiz' %}" hx-target="#quiz-active" hx-swap="outerHTML" hx-disabled-elt="find button">
+                    {% csrf_token %}
+                    <input type="hidden" name="round_token" value="{{ round_token }}">
+                    <div class="relative w-full max-w-xs">
+                        <input id="guess" type="text" placeholder="Guess the country..."
+                               class="input input-success w-full text-xl text-center" name="guess" autocomplete="off"
+                               hx-get="{% url 'search_guesses' %}"
+                               hx-trigger="keyup[event.key !== 'Tab' && event.key !== 'Enter'] changed"
+                               hx-target="#guesses" hx-swap="innerHTML" required>
+                        <div id="guesses" class="absolute top-full left-0 right-0 z-50 mt-1 transition-opacity duration-150">
+                            {% include 'guesses.html' %}
+                        </div>
                     </div>
+                    <button id="submit-btn" type="submit" class="btn btn-success mt-4 text-2xl">Guess</button>
+                </form>
+                {% endif %}
+
+                <button id="fact-button" type="button" data-quiz-hint class="btn btn-info mt-5">Hint</button>
+                <p id="fact" class="hidden text-xl text-base-content mt-4 italic text-center">{{ random_country.fact }}</p>
+            {% else %}
+                <h2 class="text-2xl font-bold">No flag is available for this mode.</h2>
+            {% endif %}
+        </div>
+
+        <div class="flex flex-col items-center border border-success/50 rounded-2xl p-5 min-h-28 max-h-80 overflow-y-auto">
+            {% if collected %}
+            <div class="flex flex-wrap items-start justify-center gap-3">
+                {% for item in collected %}
+                <div class="flex flex-col items-center max-w-24">
+                    <img src="{{ item.flag }}" title="{{ item.fact }}" class="h-12 w-auto shadow-sm rounded-sm" alt="Flag of {{ item.name }}" loading="lazy" decoding="async">
+                    <p class="mt-1 text-sm text-center break-words">{{ item.name }}</p>
+                </div>
                 {% endfor %}
             </div>
-        {% else %}
-        <p class="italic text-base-content opacity-75 text-xl">Collected flags will go here...</p>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Change Gamemode Warning Modal -->
-<dialog id="change_gamemode_modal" class="modal">
-    <div class="modal-box flex flex-col items-center gap-4">
-        <h3 class="text-xl font-bold text-center">⚠️ Change Game Mode?</h3>
-        <p class="text-center text-base-content/75">
-            Changing the game mode will <span class="text-error font-semibold">forfeit your current game</span> and reset your streak.
-        </p>
-        <div class="modal-action w-full justify-center mt-0 gap-3">
-            <form method="dialog">
-                <button class="btn btn-ghost">Cancel</button>
-            </form>
-            <form method="post" action="{% url 'change_gamemode' %}">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-error">Forfeit & Change</button>
-            </form>
-        </div>
-    </div>
-    <form method="dialog" class="modal-backdrop">
-        <button>Close</button>
-    </form>
-</dialog>
-
-<!-- Game Over / Victory Modal -->
-{% if game_over or game_won %}
-<dialog id="game_over_modal" class="modal">
-    <div class="modal-box flex flex-col items-center gap-4">
-
-        {% if game_won %}
-        <!-- Victory Header -->
-        <h3 class="text-2xl font-bold text-center text-success">🎉 You won the {{ gamemode_name }} Challenge!</h3>
-        <p class="text-center text-base-content/70 text-sm">You named every single flag without a mistake. Amazing job!</p>
-        {% else %}
-        <!-- Defeat Header -->
-        <h3 class="text-2xl font-bold text-center">Game Over 😢 It was <span class="text-error">{{ truth_name }} 🚩</span></h3>
-        <img src="{{ truth_flag }}" class="h-18 w-auto inline-block drop-shadow-sm rounded-sm" alt="Flag">
-        {% endif %}
-
-        <div class="divider my-0"></div>
-
-        <div class="flex flex-col sm:flex-row gap-6 items-center justify-center w-full">
-            <div class="flex flex-col items-center">
-                <span class="text-4xl font-bold {% if game_won %}text-success{% else %}text-warning{% endif %} mt-0">{{ final_streak }}</span>
-                <span class="text-sm text-base-content mt-1">{% if game_won %}Flags Named 🚩{% else %}Streak 🔥{% endif %}</span>
-            </div>
-            {% if user.is_authenticated %}
-            <div class="flex flex-col items-center">
-                <span class="text-4xl font-bold text-warning mt-0">{{ user.high_score }}</span>
-                <span class="text-sm text-base-content mt-1">High Score ⭐</span>
-            </div>
-            {% endif %}
-        </div>
-
-        {% if not user.is_authenticated %}
-        <p class="text-center text-base-content/70 text-sm">
-            You're playing as a guest, so this score wasn't saved.
-        </p>
-        {% endif %}
-
-        <div class="w-full">
-            <h4 class="text-xl font-semibold text-center mb-2">Collected Flags 🚩</h4>
-            {% if final_collected_flags %}
-                <div class="flex flex-wrap items-center justify-center gap-2 max-h-40 overflow-y-auto p-1">
-                    {% for flag in final_collected_flags %}
-                        <img src="{{ flag }}" class="h-10 w-auto inline-block drop-shadow-sm rounded-sm" alt="Flag">
-                    {% endfor %}
-                </div>
             {% else %}
-                <p class="text-center text-base-content text-sm">No flags collected this round.</p>
+            <p class="italic text-base-content/60 text-lg">Correctly named flags appear here.</p>
             {% endif %}
         </div>
+    </section>
 
-        <div class="modal-action w-full justify-center mt-0 gap-2 flex-wrap">
-            <form method="dialog" class="flex gap-2 flex-wrap justify-center">
-                <button class="btn btn-success px-8">Play Again</button>
-                {% if user.is_authenticated %}
-                <a href="{% url 'mastery' %}" class="btn btn-primary px-8">See Mastery</a>
-                {% else %}
-                <a href="{% url 'signup' %}" class="btn btn-primary px-8">Sign Up</a>
-                {% endif %}
-            </form>
-            <form method="post" action="{% url 'change_gamemode' %}">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-warning px-6">Change Mode</button>
-            </form>
+    <dialog id="change_gamemode_modal" class="modal">
+        <div class="modal-box flex flex-col items-center gap-4">
+            <h2 class="text-xl font-bold text-center">Change game mode?</h2>
+            <p class="text-center text-base-content/75">Your current run will end and its in-progress streak will reset.</p>
+            <div class="modal-action mt-0 gap-3">
+                <form method="dialog"><button class="btn btn-ghost">Cancel</button></form>
+                <form method="post" action="{% url 'change_gamemode' %}">
+                    {% csrf_token %}<button type="submit" class="btn btn-error">End run</button>
+                </form>
+            </div>
         </div>
-    </div>
-    <form method="dialog" class="modal-backdrop">
-        <button>Close</button>
-    </form>
-</dialog>
-<script>
-    document.getElementById('game_over_modal').showModal();
-</script>
-{% endif %}
+        <form method="dialog" class="modal-backdrop"><button>Close</button></form>
+    </dialog>
 
-</div>
+    {% if game_finished %}
+    <dialog id="game_over_modal" class="modal">
+        <div class="modal-box flex flex-col items-center gap-4">
+            {% if outcome == 'timed_out' %}
+            <h2 class="text-3xl font-bold text-center text-warning">Time’s up! ⏱️</h2>
+            {% elif game_won %}
+            <h2 class="text-3xl font-bold text-center text-success">Perfect run! 🎉</h2>
+            {% elif game_over %}
+            <h2 class="text-3xl font-bold text-center">Run complete</h2>
+            <p class="text-center">The last flag was <strong class="text-error">{{ truth_name }}</strong>.</p>
+            {% else %}
+            <h2 class="text-3xl font-bold text-center text-success">Challenge complete! 🎉</h2>
+            {% endif %}
+
+            <div class="stats bg-base-200 w-full">
+                <div class="stat place-items-center"><div class="stat-title">Score</div><div class="stat-value text-success">{{ final_score }}</div></div>
+                <div class="stat place-items-center"><div class="stat-title">Answered</div><div class="stat-value">{{ final_answered }}</div></div>
+                <div class="stat place-items-center"><div class="stat-title">Missed</div><div class="stat-value text-error">{{ final_incorrect }}</div></div>
+            </div>
+
+            {% if not user.is_authenticated %}<p class="text-center text-base-content/65 text-sm">Sign up to save mastery and compete on per-mode leaderboards.</p>{% endif %}
+            <div class="modal-action w-full justify-center mt-0 gap-2 flex-wrap">
+                {% if daily_complete %}
+                <form method="post" action="{% url 'change_gamemode' %}">{% csrf_token %}<button type="submit" class="btn btn-success">Choose another mode</button></form>
+                {% else %}
+                <form method="dialog"><button class="btn btn-success px-8">Play again</button></form>
+                <form method="post" action="{% url 'change_gamemode' %}">{% csrf_token %}<button type="submit" class="btn btn-warning">Change mode</button></form>
+                {% endif %}
+                {% if user.is_authenticated %}<a href="{% url 'mastery' %}" class="btn btn-primary">See mastery</a>{% endif %}
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>Close</button></form>
+    </dialog>
+    {% endif %}
+</main>

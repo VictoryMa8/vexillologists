@@ -1,46 +1,49 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="w-full max-w-2xl mx-auto px-4 py-10">
-  <h1 class="text-4xl md:text-6xl font-bold text-center mb-2">Leaderboard 🏆</h1>
-  <p class="text-center text-base-content/60 text-lg mb-10">Top 10 Vexillologists</p>
+<main class="w-full max-w-3xl mx-auto px-4 py-10">
+  <header class="text-center mb-7">
+    <h1 class="text-4xl md:text-6xl font-bold">Leaderboard 🏆</h1>
+    <p class="text-base-content/60 text-lg mt-2">Best scores are ranked separately for every mode.</p>
+  </header>
 
+  <form method="get" class="mode-filter-shell max-w-lg mx-auto mb-8">
+    <label class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+      <span class="flex items-center gap-2 shrink-0 font-semibold"><span aria-hidden="true">🎮</span> Show rankings for</span>
+      <select name="mode" aria-label="Leaderboard game mode" class="select mode-filter-select w-full" onchange="this.form.submit()">
+        {% for mode in mode_options %}
+        <option value="{{ mode.key }}" {% if mode.key == selected_mode %}selected{% endif %}>{{ mode.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </form>
+
+  <h2 class="text-3xl font-bold text-center mb-4">{{ selected_mode_name }}</h2>
   {% if top_players %}
   <div class="flex flex-col gap-2">
     {% for player in top_players %}
-    <div class="flex items-center gap-4 bg-base-300 rounded-2xl px-5 py-4
-      {% if forloop.counter == 1 %}ring-2 ring-yellow-400
-      {% elif forloop.counter == 2 %}ring-2 ring-gray-400
-      {% elif forloop.counter == 3 %}ring-2 ring-amber-600{% endif %}">
-
+    <article class="flex items-center gap-4 bg-base-300 rounded-2xl px-4 sm:px-5 py-4
+      {% if forloop.counter == 1 %}ring-2 ring-yellow-400{% elif forloop.counter == 2 %}ring-2 ring-gray-400{% elif forloop.counter == 3 %}ring-2 ring-amber-600{% endif %}">
       <div class="text-2xl font-bold w-10 text-center shrink-0">
-        {% if forloop.counter == 1 %}🥇
-        {% elif forloop.counter == 2 %}🥈
-        {% elif forloop.counter == 3 %}🥉
-        {% else %}<span class="text-base-content/50">{{ forloop.counter }}</span>{% endif %}
+        {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}<span class="text-base-content/50">{{ forloop.counter }}</span>{% endif %}
       </div>
-
       <div class="flex-1 min-w-0">
-        <span class="text-xl font-semibold truncate block font-['Alegreya']">
-          {{ player.username }}
-        </span>
-        <span class="text-sm text-base-content/50">{{ player.games_played }} game{{ player.games_played|pluralize }} played</span>
+        <span class="text-xl font-semibold truncate block font-['Alegreya']">{{ player.username }}</span>
+        <span class="text-sm text-base-content/50">{{ player.games }} recorded run{{ player.games|pluralize }}</span>
       </div>
-
       <div class="text-right shrink-0">
-        <span class="text-2xl font-bold text-success">{{ player.high_score }} / {{ total_count }}</span>
-        <span class="block text-xs text-base-content/50">best streak</span>
+        <span class="text-2xl font-bold text-success">{{ player.best_score }}{% if score_cap %} / {{ score_cap }}{% endif %}</span>
+        <span class="block text-xs text-base-content/50">best score</span>
       </div>
-
-    </div>
+    </article>
     {% endfor %}
   </div>
   {% else %}
-  <div class="text-center py-16 text-base-content">
+  <div class="text-center py-14 bg-base-200 rounded-2xl">
     <p class="text-4xl mb-4">🏁</p>
-    <p class="text-xl">No scores yet. Be the first to play!</p>
-    <a href="{% url 'quiz' %}" class="btn btn-success mt-6 text-xl">Play Quiz</a>
+    <p class="text-xl">No {{ selected_mode_name }} scores yet.</p>
+    <a href="{% url 'quiz' %}" class="btn btn-success mt-6 text-xl">Play now</a>
   </div>
   {% endif %}
-</div>
+</main>
 {% endblock %}

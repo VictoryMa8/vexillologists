@@ -4,7 +4,6 @@
   </div>
   <div class="flex flex-row items-center gap-1">
 
-    <!-- Theme toggle: desktop only -->
     <label class="hidden md:flex cursor-pointer gap-2 mr-2 items-center">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -18,23 +17,18 @@
       </svg>
     </label>
 
-    <!-- Login: desktop only, shown when not authenticated -->
     {% if not user.is_authenticated %}
     <a href="{% url 'login' %}" class="hidden md:flex btn btn-outline btn-success rounded-xl text-xl">Login</a>
     {% endif %}
 
-    <!-- Leaderboard: desktop only -->
     <a href="{% url 'leaderboard' %}" class="hidden md:flex btn btn-warning text-xl rounded-xl">Leaderboard</a>
 
-    <!-- Mastery: desktop only -->
     {% if user.is_authenticated %}
     <a href="{% url 'mastery' %}" class="hidden md:flex btn btn-primary text-xl rounded-xl">Mastery</a>
     {% endif %}
 
-    <!-- Quiz button: desktop only (in dropdown on mobile) -->
     <a href="{% url 'quiz' %}" class="hidden md:flex btn btn-success text-xl rounded-xl px-4">Quiz!</a>
 
-    <!-- Dropdown menu -->
     <div class="dropdown dropdown-end">
       <div tabindex="0" role="button" class="btn btn-success flex items-center gap-2 mr-2 rounded-xl hover:border hover:border-success">
         {% load static %}
@@ -47,7 +41,6 @@
         {% else %}
         <span class="hidden md:inline text-lg">Menu</span>
         {% endif %}
-        <!-- Chevron down -->
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M6 9l6 6 6-6"/>
@@ -57,13 +50,10 @@
         tabindex="0"
         class="menu menu-sm dropdown-content bg-success text-success-content rounded-box z-1 mt-2 w-52 p-2 shadow">
 
-        <!-- Quiz: mobile only (shown in desktop navbar) -->
         <li class="md:hidden"><a href="{% url 'quiz' %}" class="text-2xl border-b-1 border-success-content">Quiz!</a></li>
 
-        <!-- Leaderboard: mobile only (already shown in desktop navbar) -->
         <li class="md:hidden"><a href="{% url 'leaderboard' %}" class="text-2xl border-b-1 border-success-content">Leaderboard</a></li>
 
-        <!-- Mastery: mobile only -->
         {% if user.is_authenticated %}
         <li class="md:hidden"><a href="{% url 'mastery' %}" class="text-2xl border-b-1 border-success-content">Mastery</a></li>
         {% endif %}
@@ -73,7 +63,6 @@
         <li><a href="{% url 'privacy' %}" class="text-2xl border-b-1 border-success-content">Privacy Policy</a></li>
         <li><a href="{% url 'release_notes' %}" class="text-2xl border-b-1 border-success-content">Release Notes</a></li>
 
-        <!-- If user is authenticated, display settings + logout, otherwise, login + sign up -->
         {% if user.is_authenticated %}
           <li><a href="{% url 'settings' %}" class="text-2xl border-b-1 border-success-content">Settings</a></li>
           <li>
@@ -83,7 +72,6 @@
             </form>
           </li>
         {% else %}
-          <!-- Login: mobile only (already shown in desktop navbar) -->
           <li class="md:hidden"><a href="{% url 'login' %}" class="text-2xl text-success">Login</a></li>
           <li><a href="{% url 'signup' %}" class="text-2xl text-success">Sign Up</a></li>
         {% endif %}

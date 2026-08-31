@@ -2,11 +2,7 @@
 
 {% block content %}
 <h1 class="text-4xl md:text-6xl mt-8 font-bold">Contact 📩</h1>
-<h2 class="text-2xl md:text-4xl mt-8 break-words text-center">Email <span onclick="copyEmail()" id="email" class="text-success hover:text-success-content hover:cursor-pointer transition duration-300 ease-in-out">support@vexillologists.com</span> for questions and support.</h2>
-<script>
-    function copyEmail() {
-        navigator.clipboard.writeText('support@vexillologists.com');
-        toast.show('Email copied to clipboard');
-    }
-</script>
+<h2 class="text-2xl md:text-4xl mt-8 break-words text-center">
+    Email <a href="mailto:support@vexillologists.com" class="text-success hover:text-success-content transition duration-300 ease-in-out">support@vexillologists.com</a> for questions and support.
+</h2>
 {% endblock %}

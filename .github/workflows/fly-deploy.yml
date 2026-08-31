@@ -33,6 +33,11 @@ jobs:
       DB_PASS: postgres
       DB_HOST: localhost
       DB_PORT: 5432
+      TEST_DB_NAME: vexillologists_test
+      TEST_DB_USER: postgres
+      TEST_DB_PASS: postgres
+      TEST_DB_HOST: localhost
+      TEST_DB_PORT: 5432
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

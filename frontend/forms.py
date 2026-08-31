@@ -1,20 +1,51 @@
 import os
+
 from django import forms
-# Using Django's built-in UserCreationForm and PasswordChangeForm to inherit from
 from django.contrib.auth import authenticate
-from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm as DjangoPasswordChangeForm
+from django.contrib.auth.forms import (
+    PasswordChangeForm as DjangoPasswordChangeForm,
+    UserCreationForm,
+)
+
 from .models import Vexillologist
 
-# Generic impersonation defaults; sensitive terms come from BLOCKED_USERNAME_WORDS env var.
-DEFAULT_BLOCKED = {"admin", "administrator", "moderator", "support", "staff", "root", "owner"}
-
-# Set of substrings that are not allowed in usernames
-BLOCKED_USERNAME_SUBSTRINGS = DEFAULT_BLOCKED | {
-    w.strip().lower() for w in os.getenv("BLOCKED_USERNAME_WORDS", "").split(",") if w.strip()
+DEFAULT_BLOCKED = {
+    "admin",
+    "administrator",
+    "moderator",
+    "support",
+    "staff",
+    "root",
+    "owner",
 }
+BLOCKED_USERNAME_SUBSTRINGS = DEFAULT_BLOCKED | {
+    word.strip().lower()
+    for word in os.getenv("BLOCKED_USERNAME_WORDS", "").split(",")
+    if word.strip()
+}
+LEET_MAP = str.maketrans(
+    {
+        "0": "o",
+        "1": "i",
+        "3": "e",
+        "4": "a",
+        "5": "s",
+        "7": "t",
+        "@": "a",
+        "$": "s",
+        "!": "i",
+    }
+)
+FORM_INPUT_CLASSES = "input input-bordered w-full focus:outline-primary"
 
-# Map of characters that users could replace for leet speak
-LEET_MAP = str.maketrans({"0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "@": "a", "$": "s", "!": "i"})
+
+class StyledFieldsMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            existing = field.widget.attrs.get("class", "")
+            field.widget.attrs["class"] = f"{existing} {FORM_INPUT_CLASSES}".strip()
+
 
 def validate_username(username):
     if not username:
@@ -26,8 +57,8 @@ def validate_username(username):
             raise forms.ValidationError("That username isn't allowed. Please choose another.")
     return username
 
-# Form for creating a new user (Vexillologist) using UserCreationForm
-class VexillologistCreationForm(UserCreationForm):
+
+class VexillologistCreationForm(StyledFieldsMixin, UserCreationForm):
     class Meta:
         model = Vexillologist
         fields = ("username", "email")
@@ -39,22 +70,17 @@ class VexillologistCreationForm(UserCreationForm):
         return validate_username(username)
 
     def clean_email(self):
-        email = Vexillologist.objects.normalize_email(self.cleaned_data.get("email", "")).strip()
+        email = Vexillologist.objects.normalize_email(
+            self.cleaned_data.get("email", "")
+        ).strip()
         if Vexillologist.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError("An account with that email already exists.")
         return email
 
-class LoginForm(forms.Form):
+
+class LoginForm(StyledFieldsMixin, forms.Form):
     email = forms.EmailField()
     password = forms.CharField(widget=forms.PasswordInput)
-
-    '''
-    Built-in hook used for custom validation
-    Since we want to login with email instead, we have to manually check credentials
-    To verify a user, we need both email and password, clean() accesses both
-    Without this, form would just verify the user typed something into email/password
-    It wouldn't actually verify who they are against the database
-    '''
 
     def clean(self):
         cleaned_data = super().clean()
@@ -67,8 +93,7 @@ class LoginForm(forms.Form):
         user_record = Vexillologist.objects.filter(email__iexact=email).first()
         user = None
         if user_record:
-            # authenticate() applies backend policy as well as checking the password,
-            # including Django's protection against inactive accounts.
+            # authenticate() also enforces backend policy, including inactive users.
             user = authenticate(username=user_record.get_username(), password=password)
 
         if not user:
@@ -78,23 +103,26 @@ class LoginForm(forms.Form):
         return cleaned_data
 
 
-class VexillologistChangeForm(forms.ModelForm):
+class VexillologistChangeForm(StyledFieldsMixin, forms.ModelForm):
     class Meta:
         model = Vexillologist
         fields = ('first_name', 'last_name')
 
 
-class UsernameChangeForm(forms.ModelForm):
+class UsernameChangeForm(StyledFieldsMixin, forms.ModelForm):
     class Meta:
         model = Vexillologist
         fields = ('username',)
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
-        if Vexillologist.objects.exclude(pk=self.instance.pk).filter(username__iexact=username).exists():
+        username_exists = Vexillologist.objects.exclude(pk=self.instance.pk).filter(
+            username__iexact=username
+        ).exists()
+        if username_exists:
             raise forms.ValidationError("That username is already taken.")
         return validate_username(username)
 
 
-class PasswordChangeForm(DjangoPasswordChangeForm):
-    pass
+class PasswordChangeForm(StyledFieldsMixin, DjangoPasswordChangeForm):
+    """Django's password-change behavior with the shared input styling."""
