@@ -1,12 +1,32 @@
 """Country queries, serialization, filtering, and caching."""
 
 from django.core.cache import cache
+from django.templatetags.static import static
 
 from .cache_keys import COUNTRIES as COUNTRIES_CACHE_KEY
 from .models import Country
 
 
 COUNTRIES_CACHE_TTL = 60 * 60
+
+# These detailed flags are bundled locally because Wikimedia file moves and
+# hotlink failures otherwise leave holes in the explorer and quiz.
+LOCAL_FLAG_ASSETS = {
+    "Metis": "assets/images/flags/metis.svg",
+    "Métis": "assets/images/flags/metis.svg",
+    "Navajo": "assets/images/flags/navajo.svg",
+    "Oromia": "assets/images/flags/oromia.svg",
+    "Pashtun": "assets/images/flags/pashtun.svg",
+    "Rohingya": "assets/images/flags/rohingya.svg",
+    "Sami": "assets/images/flags/sami.svg",
+    "Sámi": "assets/images/flags/sami.svg",
+    "Zanzibar": "assets/images/flags/zanzibar.svg",
+}
+
+
+def flag_image_url(country):
+    local_asset = LOCAL_FLAG_ASSETS.get(country.name)
+    return static(local_asset) if local_asset else country.flag_image_url
 
 
 def get_countries():
@@ -18,7 +38,7 @@ def get_countries():
         {
             "name": country.name,
             "flag_emoji": country.flag_emoji,
-            "flag_image_url": country.flag_image_url,
+            "flag_image_url": flag_image_url(country),
             "capital": country.capital,
             "population_2024": country.population,
             "area_km2": country.area_km2,

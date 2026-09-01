@@ -26,6 +26,12 @@ class PublicViewsTest(TestCase):
     def test_leaderboard_redirects_anonymous_users(self):
         self.assertEqual(self.client.get(reverse("leaderboard")).status_code, 302)
 
+    def test_home_page_advertises_daily_challenge(self):
+        response = self.client.get(reverse("index"))
+        self.assertContains(response, "Daily Challenge")
+        self.assertContains(response, 'name="gamemode" value="daily"')
+        self.assertContains(response, "Explore")
+
 
 class AuthGateTest(TestCase):
     def _assert_redirects_to_login(self, url):

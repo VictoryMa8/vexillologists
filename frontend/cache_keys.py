@@ -1,1 +1,1 @@
-COUNTRIES = "countries:v2"
+COUNTRIES = "countries:v3"

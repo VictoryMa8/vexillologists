@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./home.css";
 @plugin "daisyui";
 
 /* Shared visual language: controls are compact-soft, surfaces are generously rounded. */
@@ -12,10 +13,6 @@ html[data-theme] {
 
 body {
     background-color: var(--color-base-100);
-    background-image:
-        radial-gradient(circle at 8% 6%, color-mix(in oklab, var(--color-success) 7%, transparent) 0, transparent 24rem),
-        radial-gradient(circle at 92% 28%, color-mix(in oklab, var(--color-primary) 6%, transparent) 0, transparent 22rem);
-    background-repeat: no-repeat;
 }
 
 h1, h2, h3 {
@@ -275,9 +272,7 @@ a:focus-visible {
 .mastery-review-callout {
     border: 1px solid color-mix(in oklab, var(--color-primary) 30%, var(--color-base-300));
     border-radius: var(--ui-panel-radius);
-    background: linear-gradient(135deg,
-        color-mix(in oklab, var(--color-primary) 10%, var(--color-base-200)),
-        var(--color-base-200));
+    background: var(--color-base-200);
     padding: 0.8rem;
     box-shadow: 0 8px 24px color-mix(in oklab, var(--color-base-content) 7%, transparent);
 }

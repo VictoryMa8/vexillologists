@@ -2,9 +2,11 @@
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.utils.text import slugify
 
 from .countries import filter_choices, filter_countries, get_countries
+from .models import GameResult
 
 
 def _optional_int(value):
@@ -24,6 +26,17 @@ def _filters(query_params):
     }
 
 
+def _daily_completed(request):
+    today = timezone.localdate()
+    if request.user.is_authenticated:
+        return GameResult.objects.filter(
+            user=request.user,
+            gamemode="daily",
+            challenge_date=today,
+        ).exists()
+    return request.session.get("quiz_daily_completed") == today.isoformat()
+
+
 def index(request):
     countries = get_countries()
     filters = _filters(request.GET)
@@ -40,6 +53,7 @@ def index(request):
             "selected_type": filters["entry_type"],
             "selected_min_area": request.GET.get("min_area", ""),
             "selected_min_population": request.GET.get("min_population", ""),
+            "daily_completed": _daily_completed(request),
         },
     )
 

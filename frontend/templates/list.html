@@ -1,15 +1,20 @@
 {% if countries %}
     {% for country in countries %}
-        <a href="{% url 'country' country_name=country.name|slugify %}" class="country-card text-4xl md:text-4xl font-['Alegreya'] bg-success-content hover:bg-success hover:text-success-content text-white p-4 rounded-2xl flex items-center justify-between">
-            <span>{{ country.name }} 
-            {% if country.flag_image_url %}
-                <img src="{{ country.flag_image_url }}" class="h-[1em] inline-block shadow-sm ml-1 rounded-sm" alt="Flag of {{ country.name }}" loading="lazy" decoding="async">
-            {% else %}
-                {{ country.flag_image_url }}
-            {% endif %}
+        <a href="{% url 'country' country_name=country.name|slugify %}" class="country-card">
+            <span class="country-card-name">
+                {{ country.name }}
+                {% if country.flag_image_url %}
+                    <img class="country-card-flag" src="{{ country.flag_image_url }}" alt="Flag of {{ country.name }}" loading="lazy" decoding="async">
+                {% else %}
+                    <span class="country-card-emoji" aria-hidden="true">{{ country.flag_emoji }}</span>
+                {% endif %}
             </span>
         </a>
     {% endfor %}
 {% else %}
-    <p class="text-4xl">No countries found... 😨</p>
+    <div class="country-empty">
+        <span aria-hidden="true">🧭</span>
+        <h3>No flags found</h3>
+        <p>Try a broader search or reset the filters.</p>
+    </div>
 {% endif %}

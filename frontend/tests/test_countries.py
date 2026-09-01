@@ -1,9 +1,12 @@
+from types import SimpleNamespace
+
 from django.core.cache import cache
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from frontend.countries import (
     COUNTRIES_CACHE_KEY,
     filter_countries,
+    flag_image_url,
     get_countries,
 )
 
@@ -113,3 +116,35 @@ class FilterCountriesTest(SimpleTestCase):
             entry_type="Territory",
         )
         self.assertEqual([country["name"] for country in result], ["Gibraltar"])
+
+
+@override_settings(STATIC_URL="/test-static/")
+class LocalFlagAssetTest(SimpleTestCase):
+    def test_broken_flag_hotlinks_use_bundled_assets(self):
+        expected_files = {
+            "Métis": "metis.svg",
+            "Navajo": "navajo.svg",
+            "Oromia": "oromia.svg",
+            "Pashtun": "pashtun.svg",
+            "Rohingya": "rohingya.svg",
+            "Sámi": "sami.svg",
+            "Zanzibar": "zanzibar.svg",
+        }
+
+        for name, filename in expected_files.items():
+            with self.subTest(name=name):
+                country = SimpleNamespace(
+                    name=name,
+                    flag_image_url="https://example.com/broken.svg",
+                )
+                self.assertEqual(
+                    flag_image_url(country),
+                    f"/test-static/assets/images/flags/{filename}",
+                )
+
+    def test_other_flags_keep_their_saved_url(self):
+        country = SimpleNamespace(
+            name="Testland",
+            flag_image_url="https://example.com/flag.svg",
+        )
+        self.assertEqual(flag_image_url(country), country.flag_image_url)

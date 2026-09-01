@@ -1,150 +1,137 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %} Home {% endblock %}
+{% block title %}Learn Flags & Play the Daily Challenge{% endblock %}
 
 {% block content %}
-
-<div class="hero min-h-[50vh] mt-4">
-  <div class="hero-content flex-col lg:flex-row-reverse">
-    <img class="mt-4 h-60 rounded-lg" src="{% static 'assets/images/globe.svg' %}">
-    <div>
+<main class="home-page w-full">
+  <section class="home-hero" aria-labelledby="home-heading">
+    <div class="home-hero-copy">
       {% if user.is_authenticated %}
-      <h1 class="text-4xl md:text-5xl font-bold">Welcome to <i class="font-['Alegreya']">Vexillologists.com</i> <span class="text-success">{{ user.username }}</span>! There's <span class="text-success">{{ total_count }}</span> flags waiting for you 🤩</h1>
-      <h1 class="mt-4 py-4 text-3xl md:text-4xl max-w-200 font-['Alegreya']">
-        Start quizzing or learn more about the countries, territories, and people groups below! 👇🤓 Tap on one to learn more 🌎
-      </h1>
-      {% else %}
-      <h1 class="text-4xl md:text-5xl font-bold">Learn about our world and its beautiful cultures through simple, fun activities.</h1>
-      <h2 class="text-4xl md:text-5xl text-success font-['Alegreya']"><span class="text-success">{{ total_count }}</span> flags and counting!</h2>
-      <p class="mt-4 py-4 text-3xl md:text-4xl max-w-200 font-['Alegreya']">
-        <a href="{% url 'login' %}" class="text-success hover:text-success-content transition duration-300 ease-in-out">Login</a> if you'd like to save your score, otherwise go ahead! 🤩 🌏
-      </p>
+      <p class="home-welcome text-2xl">Welcome back, <strong>{{ user.username }}</strong></p>
       {% endif %}
-      <div class="flex flex-wrap gap-2 font-['Alegreya']">
-        <a href="{% url 'quiz' %}" class="btn btn-success text-4xl rounded-2xl p-6">Quiz Yourself!</a>
-        <a href="{% url 'leaderboard' %}" class="btn btn-warning text-4xl rounded-2xl p-6">Leaderboard</a>
-        <a href="{% url 'mastery' %}" class="btn btn-primary text-4xl rounded-2xl p-6">Mastery</a>
+      <h1 id="home-heading">Discover all the<br><span>beautiful</span> flags of the world</h1>
+      <p class="home-lede">Learn some things, explore, and have some fun!</p>
+
+      <div class="home-hero-actions">
+        {% if daily_completed %}
+        <a href="{% url 'quiz' %}" class="btn btn-warning btn-lg home-primary-action">
+          <span aria-hidden="true">✓</span> Daily challenge complete
+        </a>
+        {% else %}
+        <form method="post" action="{% url 'quiz' %}">
+          {% csrf_token %}
+          <button type="submit" name="gamemode" value="daily" class="btn btn-warning btn-lg home-primary-action">
+            Play today’s challenge <span aria-hidden="true">→</span>
+          </button>
+        </form>
+        {% endif %}
+        <a href="#flag-explorer" class="btn btn-ghost btn-lg home-secondary-action">Explore all flags</a>
       </div>
     </div>
-  </div>
-</div>
 
-<span id="spinner" class="htmx-indicator loading loading-dots loading-xl my-2"></span>
+    <aside class="daily-showcase" aria-label="Daily Challenge preview">
+      <div class="daily-flag-stack" aria-hidden="true">
+        <div class="daily-flag-card daily-flag-left">
+          <img src="{% static 'assets/images/flags/oromia.svg' %}" alt="">
+        </div>
+        <div class="daily-flag-card daily-flag-center">
+          <span class="daily-question-mark">?</span>
+        </div>
+        <div class="daily-flag-card daily-flag-right">
+          <img src="{% static 'assets/images/flags/zanzibar.svg' %}" alt="">
+        </div>
+      </div>
 
-<form id="filters" class="mb-4 mx-auto w-3/4" data-search-url="{% url 'search_countries' %}">
-  <div class="flex flex-wrap items-end gap-2">
-    <label class="input input-bordered w-full text-xl">
-      <input
-        type="text"
-        placeholder="Search for a place/people..."
-        name="search_countries"
-        class="w-full"
-        value="{{ selected_query }}"
-        hx-get="{% url 'search_countries' %}"
-        hx-trigger="keyup changed"
-        hx-target="#list"
-        hx-include="#filters"
-        hx-on::before-request="document.getElementById('list').style.opacity = 0.3;"
-        hx-on::after-request="document.getElementById('list').style.opacity = 1;"
-        hx-indicator="#spinner"
-      />
-    </label>
+      <h2>Daily Challenge</h2>
+      <p class="daily-summary">10 flags, same set for everyone, one attempt!</p>
+    </aside>
+  </section>
 
-    <label class="form-control w-full sm:w-56">
-      <span class="label-text">Continent</span>
-      <select
-        class="select select-bordered w-full"
-        name="continent"
-        hx-get="{% url 'search_countries' %}"
-        hx-trigger="change"
-        hx-target="#list"
-        hx-include="#filters"
-        hx-indicator="#spinner"
-      >
-        <option value="">All continents</option>
-        {% for continent in continents %}
-          <option value="{{ continent }}" {% if selected_continent == continent %}selected{% endif %}>{{ continent }}</option>
-        {% endfor %}
-      </select>
-    </label>
-
-    <label class="form-control w-full sm:w-56">
-      <span class="label-text">Type</span>
-      <select
-        class="select select-bordered w-full"
-        name="entry_type"
-        hx-get="{% url 'search_countries' %}"
-        hx-trigger="change"
-        hx-target="#list"
-        hx-include="#filters"
-        hx-indicator="#spinner"
-      >
-        <option value="">All types</option>
-        {% for entry_type in entry_types %}
-          <option value="{{ entry_type }}" {% if selected_type == entry_type %}selected{% endif %}>{{ entry_type }}</option>
-        {% endfor %}
-      </select>
-    </label>
-
-    <label class="form-control w-full sm:w-48">
-      <span class="label-text">Min area (km²)</span>
-      <input
-        type="number"
-        class="input input-bordered w-full"
-        name="min_area"
-        min="0"
-        step="1"
-        value="{{ selected_min_area }}"
-        placeholder="i.e. 100000"
-        hx-get="{% url 'search_countries' %}"
-        hx-trigger="keyup changed delay:300ms"
-        hx-target="#list"
-        hx-include="#filters"
-        hx-indicator="#spinner"
-      />
-    </label>
-
-    <label class="form-control w-full sm:w-48">
-      <span class="label-text">Min population</span>
-      <input
-        type="number"
-        class="input input-bordered w-full"
-        name="min_population"
-        min="0"
-        step="1"
-        value="{{ selected_min_population }}"
-        placeholder="i.e. 1000000"
-        hx-get="{% url 'search_countries' %}"
-        hx-trigger="keyup changed delay:300ms"
-        hx-target="#list"
-        hx-include="#filters"
-        hx-indicator="#spinner"
-      />
-    </label>
-
-    <div class="w-full sm:w-auto">
-      <a href="{% url 'index' %}" class="btn btn-outline w-full sm:w-auto">Reset</a>
+  <section id="flag-explorer" class="explorer-section" aria-labelledby="explorer-heading">
+    <div class="explorer-heading-row">
+      <h2 id="explorer-heading">Explore {{ total_count }} flags</h2>
     </div>
-  </div>
-</form>
 
-<div id="list" class="flex flex-wrap self-start mx-8 mt-8 mb-24 gap-2">
-{% include 'list.html' %}
-</div>
+    <form id="filters" class="explorer-filters" data-search-url="{% url 'search_countries' %}">
+      <label class="explorer-search">
+        <span class="sr-only">Search flags</span>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path>
+        </svg>
+        <input
+          type="search"
+          placeholder="Search a place or people…"
+          name="search_countries"
+          value="{{ selected_query }}"
+          hx-get="{% url 'search_countries' %}"
+          hx-trigger="keyup changed delay:200ms, search"
+          hx-target="#list"
+          hx-include="#filters"
+          hx-on::before-request="document.getElementById('list').style.opacity = 0.3;"
+          hx-on::after-request="document.getElementById('list').style.opacity = 1;"
+          hx-indicator="#spinner"
+        >
+      </label>
 
+      <label class="explorer-field">
+        <span>Continent</span>
+        <select name="continent" hx-get="{% url 'search_countries' %}" hx-trigger="change" hx-target="#list" hx-include="#filters" hx-indicator="#spinner">
+          <option value="">All continents</option>
+          {% for continent in continents %}
+          <option value="{{ continent }}" {% if selected_continent == continent %}selected{% endif %}>{{ continent }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="explorer-field">
+        <span>Type</span>
+        <select name="entry_type" hx-get="{% url 'search_countries' %}" hx-trigger="change" hx-target="#list" hx-include="#filters" hx-indicator="#spinner">
+          <option value="">All types</option>
+          {% for entry_type in entry_types %}
+          <option value="{{ entry_type }}" {% if selected_type == entry_type %}selected{% endif %}>{{ entry_type }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <details class="explorer-more">
+        <summary>More filters</summary>
+        <div class="explorer-more-grid">
+          <label class="explorer-field">
+            <span>Minimum area (km²)</span>
+            <input type="number" name="min_area" min="0" step="1" value="{{ selected_min_area }}" placeholder="100,000" hx-get="{% url 'search_countries' %}" hx-trigger="keyup changed delay:300ms" hx-target="#list" hx-include="#filters" hx-indicator="#spinner">
+          </label>
+          <label class="explorer-field">
+            <span>Minimum population</span>
+            <input type="number" name="min_population" min="0" step="1" value="{{ selected_min_population }}" placeholder="1,000,000" hx-get="{% url 'search_countries' %}" hx-trigger="keyup changed delay:300ms" hx-target="#list" hx-include="#filters" hx-indicator="#spinner">
+          </label>
+        </div>
+      </details>
+
+      <a href="{% url 'index' %}#flag-explorer" class="btn btn-ghost explorer-reset">Reset</a>
+    </form>
+
+    <div class="explorer-status">
+      <span id="spinner" class="htmx-indicator loading loading-dots loading-md" aria-label="Loading flags"></span>
+    </div>
+
+    <div id="list" class="country-grid">
+      {% include 'list.html' %}
+    </div>
+  </section>
+</main>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    window.addEventListener("pageshow", () => {
-        const filters = document.getElementById("filters");
-        if (!filters) return;
+  window.addEventListener("pageshow", () => {
+    const filters = document.getElementById("filters");
+    if (!filters) return;
 
-        htmx.ajax("GET", filters.dataset.searchUrl, {
-            target: "#list",
-            source: filters,
-        });
+    htmx.ajax("GET", filters.dataset.searchUrl, {
+      target: "#list",
+      source: filters,
     });
+  });
 </script>
 {% endblock %}
